@@ -5,9 +5,10 @@ import { Recipe, Screen } from '../types';
 interface RecipeDetailScreenProps {
   recipe: Recipe;
   onNavigate: (screen: Screen) => void;
+  onCookingComplete: () => void;
 }
 
-export default function RecipeDetailScreen({ recipe, onNavigate }: RecipeDetailScreenProps) {
+export default function RecipeDetailScreen({ recipe, onNavigate, onCookingComplete }: RecipeDetailScreenProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<boolean[]>(new Array(recipe.steps.length).fill(false));
 
@@ -220,16 +221,13 @@ export default function RecipeDetailScreen({ recipe, onNavigate }: RecipeDetailS
                 <ArrowLeft className="w-5 h-5" />
                 다른 레시피 보기
               </button>
-              <button className="w-full bg-[#10B981] text-white py-4 rounded-xl font-semibold hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2">
-                <ChefHat className="w-5 h-5" />
-                요리 시작하기! 
+              <button
+                onClick={onCookingComplete}
+                className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3"
+              >
+                🍳 요리 완성!
+                <div className="text-xl">🎉</div>
               </button>
-              
-              {completedCount === recipe.steps.length && (
-                <button className="w-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
-                  🎉 요리 완성 기록하기
-                </button>
-              )}
             </div>
 
             {/* 요리 팁 */}

@@ -75,10 +75,10 @@ export default function FridgeScreen({ ingredients, onNavigate, onAddIngredient 
   const safeCount = ingredients.filter(i => getExpiryStatus(i.daysLeft) === 'safe').length;
 
   const expiryFilters = [
-    { key: 'all' as ExpiryFilter, label: '전체', count: ingredients.length, color: '#6B7280' },
-    { key: 'safe' as ExpiryFilter, label: '안전', count: safeCount, color: '#10B981' },
-    { key: 'warning' as ExpiryFilter, label: '주의', count: warningCount, color: '#F59E0B' },
-    { key: 'urgent' as ExpiryFilter, label: '임박', count: urgentCount, color: '#EF4444' },
+    { key: 'all' as ExpiryFilter, label: '전체', color: '#6B7280' },
+    { key: 'safe' as ExpiryFilter, label: '안전', color: '#10B981' },
+    { key: 'warning' as ExpiryFilter, label: '주의', color: '#F59E0B' },
+    { key: 'urgent' as ExpiryFilter, label: '임박', color: '#EF4444' },
   ];
 
   return (
@@ -106,29 +106,29 @@ export default function FridgeScreen({ ingredients, onNavigate, onAddIngredient 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#EF4444] mb-1">임박 {urgentCount}개</div>
-                <div className="text-sm text-[#6B7280]">3일 이내 만료</div>
+                <div className="text-2xl font-bold text-[#EF4444] mb-1">{urgentCount}개</div>
+                <div className="text-sm text-[#6B7280]">임박 (3일 이내)</div>
               </div>
             </div>
             
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#F59E0B] mb-1">주의 {warningCount}개</div>
-                <div className="text-sm text-[#6B7280]">4-7일 내 만료</div>
+                <div className="text-2xl font-bold text-[#F59E0B] mb-1">{warningCount}개</div>
+                <div className="text-sm text-[#6B7280]">주의 (4-7일)</div>
               </div>
             </div>
             
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#10B981] mb-1">안전 {safeCount}개</div>
-                <div className="text-sm text-[#6B7280]">7일 이상 남음</div>
+                <div className="text-2xl font-bold text-[#10B981] mb-1">{safeCount}개</div>
+                <div className="text-sm text-[#6B7280]">안전 (7일 이상)</div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#374151] mb-1">전체 {ingredients.length}개</div>
-                <div className="text-sm text-[#6B7280]">보유 재료</div>
+                <div className="text-2xl font-bold text-[#374151] mb-1">{ingredients.length}개</div>
+                <div className="text-sm text-[#6B7280]">전체 재료</div>
               </div>
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function FridgeScreen({ ingredients, onNavigate, onAddIngredient 
                     color: expiryFilter === filter.key ? 'white' : filter.color
                   }}
                 >
-                  {filter.label} {filter.count}개
+                  {filter.label}
                 </button>
               ))}
             </div>
@@ -256,7 +256,7 @@ export default function FridgeScreen({ ingredients, onNavigate, onAddIngredient 
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold text-[#374151] truncate">{ingredient.name}</h3>
                           <span className="text-sm text-[#6B7280] bg-[#F9FAFB] px-2 py-1 rounded-md">
-                            {ingredient.quantity}{ingredient.unit}
+                            {ingredient.quantity}개
                           </span>
                         </div>
                         <div className={`text-xs mb-2 px-2 py-1 rounded-md inline-block ${

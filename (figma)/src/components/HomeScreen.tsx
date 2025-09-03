@@ -119,21 +119,21 @@ export default function HomeScreen({ ingredients, recipes, onNavigate, onRecipeS
               ))}
             </div>
             
-            {/* AI 추천 특별 카드 */}
+            {/* 맞춤 추천 특별 카드 */}
             <div 
-              onClick={() => onNavigate('ai-recommend')}
+              onClick={() => onNavigate('recipe-search')}
               className="mt-6 bg-gradient-to-br from-[#10B981] via-[#059669] to-[#047857] rounded-2xl p-6 text-white cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all duration-200 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[#F59E0B]/10 to-transparent"></div>
               <div className="relative flex items-center gap-4">
-                <div className="text-4xl lg:text-5xl">🤖</div>
+                <div className="text-4xl lg:text-5xl">🥬</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-5 h-5 text-[#F59E0B]" />
-                    <h3 className="font-semibold text-lg lg:text-xl">AI 맞춤 레시피 추천</h3>
+                    <h3 className="font-semibold text-lg lg:text-xl">냉장고 요리사의 맞춤 추천</h3>
                   </div>
                   <p className="text-white/90 text-sm lg:text-base">
-                    냉장고 재료를 분석해서 특별한 레시피를 추천해드려요!
+                    보유 재료로 바로 만들 수 있는 요리들을 추천해드려요!
                   </p>
                 </div>
                 <div className="hidden lg:block text-2xl opacity-50">→</div>

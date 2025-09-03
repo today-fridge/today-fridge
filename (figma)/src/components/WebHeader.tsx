@@ -8,10 +8,8 @@ interface WebHeaderProps {
 
 export default function WebHeader({ currentScreen, onNavigate }: WebHeaderProps) {
   const navItems = [
-    { id: 'home' as Screen, label: '홈', icon: '🏠' },
-    { id: 'fridge' as Screen, label: '냉장고관리', icon: '📦' },
-    { id: 'recipe-search' as Screen, label: '레시피검색', icon: '🔍' },
-    { id: 'my-records' as Screen, label: '내기록', icon: '📊' },
+    { id: 'fridge' as Screen, label: '냉장고 관리', icon: '📦' },
+    { id: 'recipe-search' as Screen, label: '레시피 검색', icon: '🔍' },
   ];
 
   return (
@@ -22,7 +20,7 @@ export default function WebHeader({ currentScreen, onNavigate }: WebHeaderProps)
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* 로고 */}
             <div 
-              onClick={() => onNavigate('home')}
+              onClick={() => onNavigate('fridge')}
               className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             >
               <div className="text-2xl lg:text-3xl">🌿</div>
@@ -36,16 +34,16 @@ export default function WebHeader({ currentScreen, onNavigate }: WebHeaderProps)
               </div>
             </div>
 
-            {/* 데스크톱/태블릿 네비게이션 */}
-            <nav className="flex items-center space-x-1">
+            {/* 데스크톱/태블릿 네비게이션 - 가운데 정렬 */}
+            <nav className="flex items-center justify-center gap-6 lg:gap-8 flex-1">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => onNavigate(item.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-[#F3F4F6] ${
+                  className={`flex items-center gap-2 px-6 lg:px-8 py-2 lg:py-3 rounded-xl font-medium transition-all duration-200 ${
                     currentScreen === item.id
-                      ? 'bg-[#10B981] text-white hover:bg-[#059669]'
-                      : 'text-[#374151]'
+                      ? 'bg-[#10B981] text-white shadow-md'
+                      : 'text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6]'
                   }`}
                 >
                   <span className="text-base">{item.icon}</span>
@@ -75,7 +73,7 @@ export default function WebHeader({ currentScreen, onNavigate }: WebHeaderProps)
           <div className="flex items-center justify-between">
             {/* 로고 */}
             <div 
-              onClick={() => onNavigate('home')}
+              onClick={() => onNavigate('fridge')}
               className="flex items-center gap-2 cursor-pointer"
             >
               <div className="text-xl">🌿</div>
@@ -93,21 +91,21 @@ export default function WebHeader({ currentScreen, onNavigate }: WebHeaderProps)
         </div>
       </header>
 
-      {/* 모바일 하단 네비게이션 */}
+      {/* 모바일 하단 네비게이션 - 2개 메뉴 균등 분할 */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] z-50">
-        <div className="grid grid-cols-4 px-2 py-1">
+        <div className="grid grid-cols-2 px-2 py-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
+              className={`flex flex-col items-center py-3 px-1 rounded-lg transition-all duration-200 ${
                 currentScreen === item.id
                   ? 'text-[#10B981] bg-[#F0FDF4]'
                   : 'text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6]'
               }`}
             >
-              <span className="text-xl mb-1">{item.icon}</span>
-              <span className={`text-xs leading-tight text-center ${
+              <span className="text-2xl mb-1">{item.icon}</span>
+              <span className={`text-sm leading-tight text-center ${
                 currentScreen === item.id ? 'font-semibold' : 'font-medium'
               }`}>
                 {item.label}
