@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Heart,
   Clock,
@@ -9,21 +11,29 @@ import {
   Share,
   BookOpen,
 } from "lucide-react";
-import { useState } from "react";
-import { Recipe, Screen } from "../types";
-
-interface RecipeDetailScreenProps {
-  recipe: Recipe;
-}
+import { use, useState } from "react";
+import { sampleRecipes } from "@/data/sampleData";
+import Link from "next/link";
+import IngredientConsumptionModal from "@/components/IngredientConsumptionModal";
 
 export default function RecipeDetailScreen({
-  recipe,
-  onNavigate,
-}: RecipeDetailScreenProps) {
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const recipeIndex = parseInt(id);
+  const recipe = sampleRecipes[recipeIndex];
+  if (recipeIndex < 0 || recipeIndex >= sampleRecipes.length) {
+    return <div>레시피를 찾을 수 없습니다.</div>;
+  }
   const [isFavorite, setIsFavorite] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<boolean[]>(
     new Array(recipe.steps.length).fill(false)
   );
+
+  // ⭐ 모달 열기/닫기 상태 추가
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleStepComplete = (index: number) => {
     const newCompleted = [...completedSteps];
@@ -33,6 +43,19 @@ export default function RecipeDetailScreen({
 
   const completedCount = completedSteps.filter(Boolean).length;
   const progressPercentage = (completedCount / recipe.steps.length) * 100;
+
+  const handleCookingComplete = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleIngredientConfirm = (consumedIngredients: any[]) => {
+    console.log("사용한 재료:", consumedIngredients);
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -48,12 +71,12 @@ export default function RecipeDetailScreen({
 
         {/* 오버레이 헤더 */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 lg:p-6">
-          <button
-            onClick={() => onNavigate("recipe-search")}
+          <Link
+            href="recipe-search"
             className="bg-black/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/30 transition-all duration-200"
           >
             <ArrowLeft className="w-6 h-6" />
-          </button>
+          </Link>
           <div className="flex items-center gap-3">
             <button className="bg-black/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/30 transition-all duration-200">
               <Share className="w-6 h-6" />
@@ -253,23 +276,20 @@ export default function RecipeDetailScreen({
 
             {/* 액션 버튼 */}
             <div className="space-y-4">
-              <button
-                onClick={() => onNavigate("recipe-search")}
+              <Link
+                href="/recipes/search"
                 className="w-full bg-white text-[#10B981] border-2 border-[#10B981] py-4 rounded-xl font-semibold hover:bg-[#10B981] hover:text-white transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-5 h-5" />
                 다른 레시피 보기
+              </Link>
+              <button
+                onClick={handleCookingComplete}
+                className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3"
+              >
+                🍳 요리 완성!
+                <div className="text-xl">🎉</div>
               </button>
-              <button className="w-full bg-[#10B981] text-white py-4 rounded-xl font-semibold hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2">
-                <ChefHat className="w-5 h-5" />
-                요리 시작하기!
-              </button>
-
-              {completedCount === recipe.steps.length && (
-                <button className="w-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
-                  🎉 요리 완성 기록하기
-                </button>
-              )}
             </div>
 
             {/* 요리 팁 */}
@@ -289,6 +309,14 @@ export default function RecipeDetailScreen({
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <IngredientConsumptionModal
+          recipe={recipe}
+          onClose={handleModalClose}
+          onConfirm={handleIngredientConfirm}
+        />
+      )}
     </div>
   );
 }
