@@ -1,4 +1,4 @@
-export type Screen = 'home' | 'fridge' | 'recipe-search' | 'recipe-detail' | 'ai-recommend' | 'my-records';
+export type Screen = 'fridge' | 'recipe-search' | 'all-recipes' | 'recipe-detail';
 
 export interface Ingredient {
   id: string;

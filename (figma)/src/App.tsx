@@ -1,20 +1,21 @@
 import { useState } from 'react';
 import WebHeader from './components/WebHeader';
-import HomeScreen from './components/HomeScreen';
 import FridgeScreen from './components/FridgeScreen';
 import RecipeSearchScreen from './components/RecipeSearchScreen';
+import AllRecipesScreen from './components/AllRecipesScreen';
 import RecipeDetailScreen from './components/RecipeDetailScreen';
-import AIRecommendScreen from './components/AIRecommendScreen';
-import MyRecordsScreen from './components/MyRecordsScreen';
 import AddIngredientModal from './components/AddIngredientModal';
+import IngredientConsumptionModal from './components/IngredientConsumptionModal';
 import { Screen, Ingredient, Recipe } from './types';
 import { initialIngredients, sampleRecipes } from './data/sampleData';
 import { addIngredientToList } from './utils/ingredientUtils';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('home');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('fridge');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showConsumptionModal, setShowConsumptionModal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
 
@@ -24,17 +25,24 @@ export default function App() {
     setShowAddModal(false);
   };
 
+  const updateIngredientQuantity = (ingredientName: string, usedQuantity: number, unit: string) => {
+    setIngredients(prevIngredients => 
+      prevIngredients.map(ing => {
+        if (ing.name === ingredientName && ing.unit === unit) {
+          const newQuantity = Math.max(0, ing.quantity - usedQuantity);
+          return { ...ing, quantity: newQuantity };
+        }
+        return ing;
+      }).filter(ing => ing.quantity > 0)
+    );
+  };
+
+  const handleRecipeCooking = () => {
+    setShowConsumptionModal(true);
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'home':
-        return (
-          <HomeScreen 
-            ingredients={ingredients}
-            recipes={sampleRecipes}
-            onNavigate={setCurrentScreen}
-            onRecipeSelect={setSelectedRecipe}
-          />
-        );
       case 'fridge':
         return (
           <FridgeScreen 
@@ -47,10 +55,18 @@ export default function App() {
         return (
           <RecipeSearchScreen 
             recipes={sampleRecipes}
-            searchQuery={searchQuery}
+            ingredients={ingredients}
             onNavigate={setCurrentScreen}
             onRecipeSelect={setSelectedRecipe}
-            onSearchChange={setSearchQuery}
+          />
+        );
+      case 'all-recipes':
+        return (
+          <AllRecipesScreen 
+            recipes={sampleRecipes}
+            ingredients={ingredients}
+            onNavigate={setCurrentScreen}
+            onRecipeSelect={setSelectedRecipe}
           />
         );
       case 'recipe-detail':
@@ -58,29 +74,15 @@ export default function App() {
           <RecipeDetailScreen 
             recipe={selectedRecipe}
             onNavigate={setCurrentScreen}
+            onCookingComplete={handleRecipeCooking}
           />
         ) : null;
-      case 'ai-recommend':
-        return (
-          <AIRecommendScreen 
-            ingredients={ingredients}
-            onNavigate={setCurrentScreen}
-            onRecipeSelect={setSelectedRecipe}
-          />
-        );
-      case 'my-records':
-        return (
-          <MyRecordsScreen 
-            onNavigate={setCurrentScreen}
-          />
-        );
       default:
         return (
-          <HomeScreen 
+          <FridgeScreen 
             ingredients={ingredients}
-            recipes={sampleRecipes}
             onNavigate={setCurrentScreen}
-            onRecipeSelect={setSelectedRecipe}
+            onAddIngredient={() => setShowAddModal(true)}
           />
         );
     }
@@ -107,10 +109,25 @@ export default function App() {
         />
       )}
 
+      {/* 재료 소비 확인 모달 */}
+      {showConsumptionModal && selectedRecipe && (
+        <IngredientConsumptionModal 
+          recipe={selectedRecipe}
+          onClose={() => setShowConsumptionModal(false)}
+          onConfirm={(consumedIngredients) => {
+            consumedIngredients.forEach(item => {
+              updateIngredientQuantity(item.name, item.quantity, item.unit);
+            });
+            setShowConsumptionModal(false);
+            setCurrentScreen('fridge');
+          }}
+        />
+      )}
+
       {/* 푸터 (데스크톱용) */}
       <footer className="hidden lg:block bg-white border-t border-[#E5E7EB] mt-16">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <div className="text-2xl">🌿</div>
@@ -118,7 +135,7 @@ export default function App() {
               </div>
               <p className="text-[#6B7280] text-sm leading-relaxed mb-4">
                 신선한 재료로 건강한 요리를 만들어보세요. 
-                AI가 당신의 냉장고 재료를 분석해서 완벽한 레시피를 추천해드립니다.
+                냉장고 재료를 관리하고 맞춤 레시피를 추천받아보세요.
               </p>
               <p className="text-xs text-[#6B7280]">
                 © 2025 나만의 냉장고 요리사. 모든 권리 보유.
@@ -128,20 +145,10 @@ export default function App() {
             <div>
               <h4 className="font-semibold text-[#374151] mb-3">주요 기능</h4>
               <ul className="space-y-2 text-sm text-[#6B7280]">
-                <li>• 스마트 재료 관리</li>
-                <li>• AI 레시피 추천</li>
+                <li>• 냉장고 재료 관리</li>
+                <li>• 맞춤 레시피 추천</li>
                 <li>• 유통기한 알림</li>
-                <li>• 요리 기록 저장</li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-[#374151] mb-3">고객 지원</h4>
-              <ul className="space-y-2 text-sm text-[#6B7280]">
-                <li>• 사용 가이드</li>
-                <li>• 자주 묻는 질문</li>
-                <li>• 문의하기</li>
-                <li>• 피드백</li>
+                <li>• 요리 재료 자동 차감</li>
               </ul>
             </div>
           </div>

@@ -48,6 +48,18 @@ export const initialIngredients: Ingredient[] = [
     daysLeft: 16,
     emoji: '🧅',
     available: true
+  },
+  {
+    id: '5',
+    name: '양파',
+    category: '야채',
+    quantity: 3,
+    unit: '개',
+    purchaseDate: '2025-08-20',
+    expiryDate: '',
+    daysLeft: 16,
+    emoji: '🧅',
+    available: true
   }
 ];
 

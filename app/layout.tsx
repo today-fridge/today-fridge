@@ -1,25 +1,20 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter } from "next/font/google";
 import WebHeader from "@/components/WebHeader";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "나만의 냉장고 요리사",
-  description: "신선한 재료로 건강한 요리를",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>
+      <body>
+        {/* 헤더는 클라이언트 상호작용 필요하면 컴포넌트에 "use client" 추가 */}
         <WebHeader />
-        {children}
+        <main className="min-h-screen">{children}</main>
+        {/* 데스크톱 푸터가 App.tsx에 있었는데, 필요 시 여기로 이동 */}
       </body>
     </html>
   );

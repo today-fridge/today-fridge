@@ -26,13 +26,12 @@ export default function AddIngredientModal({ onClose, onAdd }: AddIngredientModa
   });
 
   const categories = ['야채', '고기', '유제품', '조미료', '기타'];
-  const units = ['개', '팩', '봉', 'kg', 'g', 'L', 'ml', '큰술', '작은술'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.expiryDate) {
-      alert('재료명과 유통기한을 입력해주세요.');
+    if (!formData.name) {
+      alert('재료명을 입력해주세요.');
       return;
     }
 
@@ -113,37 +112,31 @@ export default function AddIngredientModal({ onClose, onAdd }: AddIngredientModa
             </div>
           </div>
 
-          {/* 수량과 단위 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
-                <span className="text-[#10B981]">🔢</span>
-                수량
-              </label>
+          {/* 수량 (단위는 "개"로 고정) */}
+          <div>
+            <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
+              <span className="text-[#10B981]">🔢</span>
+              수량
+              <span className="text-[#EF4444]">*</span>
+            </label>
+            <div className="relative">
               <input
                 type="number"
-                min="1"
+                min="0.5"
                 max="999"
+                step="0.5"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-                className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg text-center"
+                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 1 })}
+                className="w-full p-4 pr-12 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg text-center"
+                required
               />
+              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#6B7280] font-medium">
+                개
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
-                <Package className="w-4 h-4 text-[#10B981]" />
-                단위
-              </label>
-              <select
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
-              >
-                {units.map((unit) => (
-                  <option key={unit} value={unit}>{unit}</option>
-                ))}
-              </select>
-            </div>
+            <p className="text-xs text-[#6B7280] mt-2">
+              💡 예: 당근 2개, 우유 1개, 계란 0.5개
+            </p>
           </div>
 
           {/* 구입일과 유통기한 */}
@@ -163,9 +156,9 @@ export default function AddIngredientModal({ onClose, onAdd }: AddIngredientModa
             </div>
             <div>
               <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
-                <span className="text-[#EF4444]">⏰</span>
+                <span className="text-[#6B7280]">⏰</span>
                 유통기한
-                <span className="text-[#EF4444]">*</span>
+                <span className="text-xs text-[#6B7280] ml-1">(선택사항)</span>
               </label>
               <input
                 type="date"
@@ -173,8 +166,10 @@ export default function AddIngredientModal({ onClose, onAdd }: AddIngredientModa
                 onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                 min={minExpiryDate}
                 className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200"
-                required
               />
+              <p className="text-xs text-[#6B7280] mt-2">
+                💡 유통기한을 입력하지 않으면 "미설정"으로 표시됩니다
+              </p>
             </div>
           </div>
 
@@ -190,7 +185,7 @@ export default function AddIngredientModal({ onClose, onAdd }: AddIngredientModa
                 <div className="flex-1">
                   <div className="font-semibold text-[#374151] text-lg">{formData.name}</div>
                   <div className="text-sm text-[#6B7280]">
-                    {formData.quantity}{formData.unit} • {formData.category}
+                    {formData.quantity}개 • {formData.category}
                   </div>
                 </div>
                 <div className="text-right">

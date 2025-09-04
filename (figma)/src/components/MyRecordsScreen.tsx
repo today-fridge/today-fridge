@@ -3,9 +3,10 @@ import { Screen } from '../types';
 
 interface MyRecordsScreenProps {
   onNavigate: (screen: Screen) => void;
+  showSuccessMessage?: boolean;
 }
 
-export default function MyRecordsScreen({ onNavigate }: MyRecordsScreenProps) {
+export default function MyRecordsScreen({ onNavigate, showSuccessMessage = false }: MyRecordsScreenProps) {
   // 샘플 데이터
   const monthlyStats = {
     cookingCount: 12,
@@ -105,8 +106,17 @@ export default function MyRecordsScreen({ onNavigate }: MyRecordsScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-[#F9FAFB] pb-20 md:pb-0">
       <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+        {/* 성공 메시지 */}
+        {showSuccessMessage && (
+          <div className="mb-6 bg-gradient-to-r from-[#10B981] to-[#059669] text-white rounded-2xl p-6 text-center shadow-lg">
+            <div className="text-4xl mb-3">🎉</div>
+            <h2 className="text-xl font-bold mb-2">냉장고가 업데이트됐어요!</h2>
+            <p className="text-white/90">요리 기록이 저장되고 재료가 자동으로 차감되었습니다.</p>
+          </div>
+        )}
+
         {/* 페이지 헤더 */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
