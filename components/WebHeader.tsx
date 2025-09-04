@@ -10,7 +10,7 @@ export default function WebHeader() {
   // 라우트 매핑: 기존 'fridge' → '/', 'recipe-search' → '/recipes/search'
   const nav = [
     { href: "/", label: "냉장고 관리", icon: "📦" },
-    { href: "/recipes/search", label: "레시피 검색", icon: "🔍" },
+    { href: "/recipes", label: "레시피", icon: "🔍" },
   ] as const;
 
   const isActive = (href: string) => {
@@ -89,9 +89,9 @@ export default function WebHeader() {
             </button> */}
 
             {/* 모바일 로그인 버튼 */}
-             <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
-                <User className="w-5 h-5 text-[#6B7280]" />
-              </button>
+            <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
+              <User className="w-5 h-5 text-[#6B7280]" />
+            </button>
           </div>
         </div>
       </header>
