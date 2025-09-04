@@ -1,19 +1,24 @@
-// components/WebHeader.tsx
 "use client";
 
-import { User, Bell } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { User, Bell } from "lucide-react";
 
 export default function WebHeader() {
   const pathname = usePathname();
 
-  const navItems = [
-    { href: "/", label: "홈", icon: "🏠" },
-    { href: "/fridge", label: "냉장고관리", icon: "📦" },
-    { href: "/recipe", label: "레시피검색", icon: "🔍" },
-    { href: "/records", label: "내기록", icon: "📊" },
-  ];
+  // 라우트 매핑: 기존 'fridge' → '/', 'recipe-search' → '/recipes/search'
+  const nav = [
+    { href: "/", label: "냉장고 관리", icon: "📦" },
+    { href: "/recipes/search", label: "레시피 검색", icon: "🔍" },
+  ] as const;
+
+  const isActive = (href: string) => {
+    // 홈은 정확히 '/', 레시피는 /recipes 하위 전부 활성 처리
+    if (href === "/") return pathname === "/";
+    if (href.startsWith("/recipes")) return pathname.startsWith("/recipes");
+    return pathname === href;
+  };
 
   return (
     <>
@@ -24,7 +29,7 @@ export default function WebHeader() {
             {/* 로고 */}
             <Link
               href="/"
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <div className="text-2xl lg:text-3xl">🌿</div>
               <div>
@@ -37,37 +42,34 @@ export default function WebHeader() {
               </div>
             </Link>
 
-            {/* 네비게이션 */}
-            <nav className="flex items-center space-x-1">
-              {navItems.map((item) => (
+            {/* 가운데 네비게이션 */}
+            <nav className="flex items-center justify-center gap-6 lg:gap-8 flex-1">
+              {nav.map((n) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-[#F3F4F6] ${
-                    pathname === item.href
-                      ? "bg-[#10B981] text-white hover:bg-[#059669]"
-                      : "text-[#374151]"
+                  key={n.href}
+                  href={n.href}
+                  className={`flex items-center gap-2 px-6 lg:px-8 py-2 lg:py-3 rounded-xl font-medium transition-all duration-200 ${
+                    isActive(n.href)
+                      ? "bg-[#10B981] text-white shadow-md"
+                      : "text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6]"
                   }`}
                 >
-                  <span className="text-base">{item.icon}</span>
-                  {item.label}
+                  <span className="text-base">{n.icon}</span>
+                  {n.label}
                 </Link>
               ))}
             </nav>
 
             {/* 우측 아이콘들 */}
             <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
+              {/* <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
                 <Bell className="w-5 h-5 text-[#6B7280]" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#EF4444] rounded-full text-xs"></span>
-              </button>
-              <Link
-                href="/login"
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
-              >
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#EF4444] rounded-full" />
+              </button> */}
+              <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors">
                 <User className="w-5 h-5 text-[#6B7280]" />
                 <span className="text-sm text-[#374151]">로그인</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -77,41 +79,43 @@ export default function WebHeader() {
       <header className="md:hidden bg-white shadow-sm border-b border-[#E5E7EB] sticky top-0 z-50">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 cursor-pointer">
+            <Link href="/" className="flex items-center gap-2">
               <div className="text-xl">🌿</div>
               <h1 className="font-semibold text-[#374151]">냉장고 요리사</h1>
             </Link>
+            {/* <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
+              <Bell className="w-5 h-5 text-[#6B7280]" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#EF4444] rounded-full" />
+            </button> */}
 
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
-                <Bell className="w-5 h-5 text-[#6B7280]" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#EF4444] rounded-full"></span>
+            {/* 모바일 로그인 버튼 */}
+             <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
+                <User className="w-5 h-5 text-[#6B7280]" />
               </button>
-            </div>
           </div>
         </div>
       </header>
 
       {/* 모바일 하단 네비게이션 */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] z-50">
-        <div className="grid grid-cols-4 px-2 py-1">
-          {navItems.map((item) => (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] z-50 pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-2 px-2 py-1">
+          {nav.map((n) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
-                pathname === item.href
+              key={n.href}
+              href={n.href}
+              className={`flex flex-col items-center py-3 px-1 rounded-lg transition-all duration-200 ${
+                isActive(n.href)
                   ? "text-[#10B981] bg-[#F0FDF4]"
                   : "text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6]"
               }`}
             >
-              <span className="text-xl mb-1">{item.icon}</span>
+              <span className="text-2xl mb-1">{n.icon}</span>
               <span
-                className={`text-xs leading-tight text-center ${
-                  pathname === item.href ? "font-semibold" : "font-medium"
+                className={`text-sm leading-tight text-center ${
+                  isActive(n.href) ? "font-semibold" : "font-medium"
                 }`}
               >
-                {item.label}
+                {n.label}
               </span>
             </Link>
           ))}
