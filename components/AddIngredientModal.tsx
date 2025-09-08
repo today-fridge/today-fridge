@@ -1,30 +1,25 @@
 "use client";
 
-import { X, Plus, Calendar, Package } from "lucide-react";
-import { useState } from "react";
+import { X, Plus, Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
 import type { Ingredient } from "@/types";
+import { CATEGORY_KO, emojiByKo } from "@/lib/ingredient";
 
 interface AddIngredientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (ingredient: Omit<Ingredient, "id" | "daysLeft" | "available">) => void;
+  onAdd: (
+    ingredient: Omit<Ingredient, "id" | "daysLeft" | "available">
+  ) => void;
 }
 
-const categoryEmojis: Record<string, string> = {
-  야채: "🥬",
-  고기: "🥩",
-  유제품: "🥛",
-  조미료: "🧂",
-  기타: "🍳",
-};
 
 export default function AddIngredientModal({
   isOpen,
   onClose,
   onAdd,
 }: AddIngredientModalProps) {
-  if (!isOpen) return null;
-
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     category: "기타",
@@ -33,24 +28,80 @@ export default function AddIngredientModal({
     purchaseDate: new Date().toISOString().split("T")[0],
     expiryDate: "",
   });
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
-  const categories = ["야채", "고기", "유제품", "조미료", "기타"] as const;
-  // const units = ["개", "팩", "봉", "kg", "g", "L", "ml", "큰술", "작은술"] as const;
+  // 이제 조건부 렌더링
+  if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       alert("재료명을 입력해주세요.");
       return;
     }
 
-    const ingredient = {
-      ...formData,
-      emoji: categoryEmojis[formData.category] || "🍳",
-    };
+    try {
+      setSubmitting(true);
 
-    onAdd(ingredient);
+      // 서버가 기대하는 payload(한글 그대로)
+      const payload = {
+        name: formData.name.trim(),
+        category: formData.category as (typeof  CATEGORY_KO)[number],
+        quantity: Number(formData.quantity),
+        unit: formData.unit,
+        purchaseDate: formData.purchaseDate || undefined,
+        expiryDate: formData.expiryDate || undefined,
+      };
+
+      const res = await fetch("/api/ingredients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.error || "추가에 실패했어요");
+      }
+
+      // 서버는 UI형태(emoji, category 한글, 날짜 문자열 등)로 돌려줌
+      const created = await res.json();
+
+      // 부모 onAdd는 id/daysLeft/available 없이 받도록 되어 있으므로 맞춰서 전달
+      onAdd({
+        name: created.name,
+        category: created.category, // "야채"|"고기"|...
+        quantity: created.quantity,
+        unit: created.unit,
+        purchaseDate: created.purchaseDate, // "yyyy-mm-dd" 또는 ""
+        expiryDate: created.expiryDate, // "yyyy-mm-dd" 또는 ""
+        emoji: created.emoji,
+      });
+
+      // 폼 리셋 & 닫기
+      setFormData({
+        name: "",
+        category: "기타",
+        quantity: 1,
+        unit: "개",
+        purchaseDate: new Date().toISOString().split("T")[0],
+        expiryDate: "",
+      });
+      onClose();
+    } catch (err: any) {
+      alert(err.message || "오류가 발생했어요");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -71,10 +122,15 @@ export default function AddIngredientModal({
               <Plus className="w-6 h-6 text-[#10B981]" />
             </div>
             <div>
-              <h2 id="add-ingredient-title" className="text-xl font-bold text-[#374151]">
+              <h2
+                id="add-ingredient-title"
+                className="text-xl font-bold text-[#374151]"
+              >
                 새 재료 추가
               </h2>
-              <p className="text-sm text-[#6B7280]">냉장고에 새로운 재료를 등록하세요</p>
+              <p className="text-sm text-[#6B7280]">
+                냉장고에 새로운 재료를 등록하세요
+              </p>
             </div>
           </div>
           <button
@@ -98,7 +154,9 @@ export default function AddIngredientModal({
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="예: 당근, 우유, 계란"
               className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
               required
@@ -112,7 +170,7 @@ export default function AddIngredientModal({
               카테고리
             </label>
             <div className="grid grid-cols-3 gap-3">
-              {categories.map((category) => (
+              { CATEGORY_KO.map((category) => (
                 <button
                   key={category}
                   type="button"
@@ -124,57 +182,18 @@ export default function AddIngredientModal({
                   }`}
                   aria-pressed={formData.category === category}
                 >
-                  <span className="text-2xl">{categoryEmojis[category]}</span>
+                  <span className="text-2xl">{emojiByKo[category]}</span>
                   <span className="text-xs font-medium">{category}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* 수량과 단위 */}
-          {/* <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
-                <span className="text-[#10B981]">🔢</span>
-                수량
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={formData.quantity}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    quantity: Number.parseInt(e.target.value || "1") || 1,
-                  })
-                }
-                className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg text-center"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
-                <Package className="w-4 h-4 text-[#10B981]" />
-                단위
-              </label>
-              <select
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
-              >
-                {units.map((unit) => (
-                  <option key={unit} value={unit}>
-                    {unit}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div> */}
+          {/* 수량 */}
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
               <span className="text-[#10B981]">🔢</span>
-              수량
-              <span className="text-[#EF4444]">*</span>
+              수량<span className="text-[#EF4444]">*</span>
             </label>
             <div className="relative">
               <input
@@ -183,11 +202,16 @@ export default function AddIngredientModal({
                 max="999"
                 step="0.5"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    quantity: parseFloat(e.target.value) || 1,
+                  })
+                }
                 className="w-full p-4 pr-12 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg text-center"
                 required
               />
-              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#6B7280] font-medium">
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] font-medium">
                 개
               </span>
             </div>
@@ -196,7 +220,7 @@ export default function AddIngredientModal({
             </p>
           </div>
 
-          {/* 구입일과 유통기한 */}
+          {/* 구입일/유통기한 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-[#374151] mb-2 flex items-center gap-2">
@@ -206,7 +230,9 @@ export default function AddIngredientModal({
               <input
                 type="date"
                 value={formData.purchaseDate}
-                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, purchaseDate: e.target.value })
+                }
                 max={today}
                 className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200"
               />
@@ -219,11 +245,13 @@ export default function AddIngredientModal({
               <input
                 type="date"
                 value={formData.expiryDate}
-                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, expiryDate: e.target.value })
+                }
                 min={minExpiryDate}
                 className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200"
               />
-               <p className="text-xs text-[#6B7280] mt-2">
+              <p className="text-xs text-[#6B7280] mt-2">
                 💡 유통기한을 입력하지 않으면 "미설정"으로 표시됩니다
               </p>
             </div>
@@ -237,9 +265,13 @@ export default function AddIngredientModal({
                 미리보기
               </p>
               <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                <span className="text-2xl">{categoryEmojis[formData.category]}</span>
+                <span className="text-2xl">
+                  {emojiByKo [formData.category]}
+                </span>
                 <div className="flex-1">
-                  <div className="font-semibold text-[#374151] text-lg">{formData.name}</div>
+                  <div className="font-semibold text-[#374151] text-lg">
+                    {formData.name}
+                  </div>
                   <div className="text-sm text-[#6B7280]">
                     {formData.quantity}
                     {formData.unit} • {formData.category}
@@ -266,10 +298,11 @@ export default function AddIngredientModal({
             </button>
             <button
               type="submit"
-              className="flex-1 py-4 px-6 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="flex-1 py-4 px-6 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Plus className="w-5 h-5" />
-              추가하기
+              {submitting ? "추가 중..." : "추가하기"}
             </button>
           </div>
         </form>
