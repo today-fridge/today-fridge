@@ -32,3 +32,24 @@ model Recipe {
 
   @@map("recipes")
 }
+
+enum IngredientCategory {
+  VEGETABLE
+  MEAT
+  DAIRY
+  SEASONING
+  OTHER
+}
+
+model Ingredient {
+  id          Int      @id @default(autoincrement())
+  name        String              @db.VarChar(80)
+  category    IngredientCategory  @default(OTHER)
+  quantity    Float               @default(1)
+  unit        String              @db.VarChar(16)      // "개" 같은 단위 자유 입력
+  purchasedAt DateTime?           // 구입일
+  expiresAt   DateTime?           // 유통기한
+
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
