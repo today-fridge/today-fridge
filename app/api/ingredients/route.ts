@@ -5,9 +5,9 @@ import {
   enumToKo,
   koToEnum,
   emojiByKo,
-  ymd,
-  calcDaysLeft,
 } from "@/lib/ingredient";
+import { ymd, calcDaysLeft } from "@/utils/date";
+
 
 export async function GET() {
   try {

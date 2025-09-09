@@ -5,16 +5,16 @@ import {
   koToEnum,
   enumToKo,
   emojiByKo,
-  ymd,
-  calcDaysLeft,
-  type CategoryKO,
+  type CategoryKo,
 } from "@/lib/ingredient";
+import { ymd, calcDaysLeft } from "@/utils/date";
 
 function parseId(param: string) {
   const n = Number(param);
   if (!Number.isFinite(n) || n <= 0) throw new Error("잘못된 id");
   return n;
 }
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -23,18 +23,20 @@ export async function PATCH(
     const id = parseId(params.id);
     const body = await req.json();
 
-    // 최소 필드 체크 (필요시 강화 가능)
+    // 필수 필드 체크
     if (!body?.name || !body?.category || !body?.unit) {
       return NextResponse.json({ error: "필수 값 누락" }, { status: 400 });
     }
 
-    const catEnum = koToEnum[body.category as CategoryKO] ?? "OTHER";
+    const catEnum = koToEnum[body.category as CategoryKo] ?? "OTHER";
+
+    // 빈 문자열 방지 처리
     const purchasedAt =
-      body.purchaseDate && String(body.purchaseDate).length > 0
+      body.purchaseDate && String(body.purchaseDate).trim() !== ""
         ? new Date(body.purchaseDate)
         : null;
     const expiresAt =
-      body.expiryDate && String(body.expiryDate).length > 0
+      body.expiryDate && String(body.expiryDate).trim() !== ""
         ? new Date(body.expiryDate)
         : null;
 
@@ -53,7 +55,7 @@ export async function PATCH(
       },
     });
 
-    // UI 형태로 변환 (GET 라우트와 동일 포맷)
+    // UI 포맷으로 변환
     const catKo = enumToKo[updated.category as keyof typeof enumToKo] ?? "기타";
     const today = new Date();
     const uiItem = {
@@ -62,9 +64,9 @@ export async function PATCH(
       category: catKo,
       quantity: updated.quantity ?? 1,
       unit: updated.unit,
-      purchaseDate: ymd(updated.purchasedAt ?? null),
-      expiryDate: ymd(updated.expiresAt ?? null),
-      daysLeft: calcDaysLeft(today, updated.expiresAt ?? null),
+      purchaseDate: ymd(updated.purchasedAt ?? null), // "YYYY-MM-DD" | ""
+      expiryDate: ymd(updated.expiresAt ?? null), // "YYYY-MM-DD" | ""
+      daysLeft: calcDaysLeft(today, updated.expiresAt ?? null), // number | null
       emoji: emojiByKo[catKo] ?? "🍳",
     };
 
@@ -78,11 +80,7 @@ export async function PATCH(
   }
 }
 
-/**
- * DELETE /api/ingredients/:id
- * - 항목을 즉시 삭제합니다.
- * - 성공 시 { ok: true }만 반환합니다.
- */
+/* DELETE /api/ingredients/:id */
 export async function DELETE(
   _req: Request,
   { params }: { params: { id: string } }

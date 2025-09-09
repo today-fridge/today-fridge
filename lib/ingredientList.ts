@@ -1,7 +1,6 @@
 // lib/ingredientList.ts
-import { calcDaysLeft } from "./ingredient";
+import { calcDaysLeft } from "@/utils/date";
 import type { Ingredient } from "@/types";
-
 export type IngredientDraft = Omit<Ingredient, "id" | "daysLeft" | "available">;
 
 function parseDateLike(iso: string) {

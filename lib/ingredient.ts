@@ -35,23 +35,3 @@ export const emojiByKo = {
   기타: "🍳",
 } as const satisfies Record<CategoryKo, string>;
 
-// 4) 날짜 유틸
-export function ymd(d: Date | null) {
-  if (!d) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-export function startOfDay(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-// 남은 일수(오늘 0시 기준, 유통기한 당일은 0)
-export function calcDaysLeft(today: Date, expiresAt: Date | null) {
-  if (!expiresAt) return 9999;
-  const t0 = startOfDay(today).getTime();
-  const e0 = startOfDay(expiresAt).getTime();
-  return Math.ceil((e0 - t0) / 86400000);
-}

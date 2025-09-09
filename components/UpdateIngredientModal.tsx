@@ -32,6 +32,7 @@ export default function UpdateIngredientsModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // esc 닫기 기능 추가
    useEffect(() => {
     if (!isOpen) return; 
     const handleKey = (e: KeyboardEvent) => {
