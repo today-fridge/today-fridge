@@ -7,11 +7,12 @@ import type { Ingredient } from '@/types';
 interface FridgeScreenProps {
   ingredients: Ingredient[];
   onAddIngredient: () => void;
+  onEditIngredient?: (ing: Ingredient) => void;
 }
 
 type ExpiryFilter = 'all' | 'safe' | 'warning' | 'urgent';
 
-export default function FridgeScreen({ ingredients, onAddIngredient }: FridgeScreenProps) {
+export default function FridgeScreen({ ingredients, onAddIngredient,onEditIngredient }: FridgeScreenProps) {
   const [activeCategory, setActiveCategory] = useState('전체');
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<'expiry' | 'name' | 'category'>('expiry');
@@ -221,6 +222,7 @@ export default function FridgeScreen({ ingredients, onAddIngredient }: FridgeScr
                 return (
                   <div
                     key={ingredient.id}
+                    onClick={() => onEditIngredient?.(ingredient)}
                     className="bg-white rounded-xl p-5 shadow-sm border border-[#E5E7EB] hover:shadow-md hover:border-[#10B981]/20 transition-all duration-200"
                   >
                     <div className="flex items-start gap-4">
