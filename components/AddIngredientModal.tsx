@@ -3,7 +3,7 @@
 import { X, Plus, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Ingredient } from "@/types";
-import { CATEGORY_KO, emojiByKo } from "@/lib/ingredient";
+import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
 
 interface AddIngredientModalProps {
   isOpen: boolean;
@@ -13,6 +13,15 @@ interface AddIngredientModalProps {
   ) => void;
 }
 
+// 폼 상태 타입
+type FormData = {
+  name: string;
+  category: CategoryKo;     // 유니온 타입
+  quantity: number;
+  unit: string;
+  purchaseDate: string;     // yyyy-mm-dd
+  expiryDate: string;       // yyyy-mm-dd | ""
+};
 
 export default function AddIngredientModal({
   isOpen,
@@ -20,14 +29,16 @@ export default function AddIngredientModal({
   onAdd,
 }: AddIngredientModalProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormData>({
     name: "",
-    category: "기타",
+    category: "기타", 
     quantity: 1,
     unit: "개",
     purchaseDate: new Date().toISOString().split("T")[0],
     expiryDate: "",
   });
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,13 +48,10 @@ export default function AddIngredientModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // 이제 조건부 렌더링
   if (!isOpen) return null;
 
- 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.name.trim()) {
       alert("재료명을 입력해주세요.");
       return;
@@ -55,7 +63,7 @@ export default function AddIngredientModal({
       // 서버가 기대하는 payload(한글 그대로)
       const payload = {
         name: formData.name.trim(),
-        category: formData.category as (typeof  CATEGORY_KO)[number],
+        category: formData.category as (typeof CATEGORY_KO)[number], 
         quantity: Number(formData.quantity),
         unit: formData.unit,
         purchaseDate: formData.purchaseDate || undefined,
@@ -73,21 +81,18 @@ export default function AddIngredientModal({
         throw new Error(j?.error || "추가에 실패했어요");
       }
 
-      // 서버는 UI형태(emoji, category 한글, 날짜 문자열 등)로 돌려줌
       const created = await res.json();
 
-      // 부모 onAdd는 id/daysLeft/available 없이 받도록 되어 있으므로 맞춰서 전달
       onAdd({
         name: created.name,
-        category: created.category, // "야채"|"고기"|...
+        category: created.category,        // "야채" | "고기" | ...
         quantity: created.quantity,
         unit: created.unit,
         purchaseDate: created.purchaseDate, // "yyyy-mm-dd" 또는 ""
-        expiryDate: created.expiryDate, // "yyyy-mm-dd" 또는 ""
+        expiryDate: created.expiryDate,     // "yyyy-mm-dd" 또는 ""
         emoji: created.emoji,
       });
 
-      // 폼 리셋 & 닫기
       setFormData({
         name: "",
         category: "기타",
@@ -122,15 +127,10 @@ export default function AddIngredientModal({
               <Plus className="w-6 h-6 text-[#10B981]" />
             </div>
             <div>
-              <h2
-                id="add-ingredient-title"
-                className="text-xl font-bold text-[#374151]"
-              >
+              <h2 id="add-ingredient-title" className="text-xl font-bold text-[#374151]">
                 새 재료 추가
               </h2>
-              <p className="text-sm text-[#6B7280]">
-                냉장고에 새로운 재료를 등록하세요
-              </p>
+              <p className="text-sm text-[#6B7280]">냉장고에 새로운 재료를 등록하세요</p>
             </div>
           </div>
           <button
@@ -154,9 +154,7 @@ export default function AddIngredientModal({
             <input
               type="text"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="예: 당근, 우유, 계란"
               className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
               required
@@ -170,7 +168,7 @@ export default function AddIngredientModal({
               카테고리
             </label>
             <div className="grid grid-cols-3 gap-3">
-              { CATEGORY_KO.map((category) => (
+              {CATEGORY_KO.map((category) => (
                 <button
                   key={category}
                   type="button"
@@ -182,7 +180,7 @@ export default function AddIngredientModal({
                   }`}
                   aria-pressed={formData.category === category}
                 >
-                  <span className="text-2xl">{emojiByKo[category]}</span>
+                  <span className="text-2xl">{emojiByKo[category]}</span>{/* ✅ 안전 인덱싱 */}
                   <span className="text-xs font-medium">{category}</span>
                 </button>
               ))}
@@ -265,9 +263,7 @@ export default function AddIngredientModal({
                 미리보기
               </p>
               <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                <span className="text-2xl">
-                  {emojiByKo [formData.category]}
-                </span>
+                <span className="text-2xl">{emojiByKo[formData.category]}</span>
                 <div className="flex-1">
                   <div className="font-semibold text-[#374151] text-lg">
                     {formData.name}
