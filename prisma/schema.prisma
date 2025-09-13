@@ -8,23 +8,28 @@ datasource db {
 }
 
 model Recipe {
-  id               Int      @id @default(autoincrement())
-  RCP_SNO          Int      @unique // 레시피 일련번호
-  RCP_TTL          String   // 레시피 제목
-  CKG_NM           String   // 요리명
-  RGTR_ID          String   // 등록자 ID
-  RGTR_NM          String   // 등록자명
-  CKG_MTH_ACTO_NM  String   // 요리방법별명
-  CKG_STA_ACTO_NM  String   // 요리상황별명
-  CKG_MTRL_ACTO_NM String   // 재료별명
-  CKG_KND_ACTO_NM  String   // 종류별명
-  CKG_IPDC         String?  // 요리소개
-  CKG_MTRL_CN      String?  // 재료내용
-  CKG_INBUN_NM     String   // 인분명
-  CKG_DODF_NM      String   // 난이도명
-  CKG_TIME_NM      String   // 조리시간명
-  FIRST_REG_DT     BigInt   // 최초등록일시
-  IMAGE_URL        String?  // 이미지 URL (CSV의 마지막 빈 컬럼)
+  id                    Int      @id @default(autoincrement())
+  RCP_SNO               Int      @unique // 레시피 일련번호
+  RCP_TTL               String   // 레시피 제목
+  CKG_NM                String   // 요리명
+  RGTR_ID               String   // 등록자 ID
+  RGTR_NM               String   // 등록자명
+  CKG_MTH_ACTO_NM       String   // 요리방법별명
+  CKG_STA_ACTO_NM       String   // 요리상황별명
+  CKG_MTRL_ACTO_NM      String   // 재료별명
+  CKG_KND_ACTO_NM       String   // 종류별명
+  CKG_IPDC              String?  // 요리소개
+  CKG_MTRL_CN           String?  // 재료내용
+  CKG_INBUN_NM          String   // 인분명
+  CKG_DODF_NM           String   // 난이도명
+  CKG_TIME_NM           String   // 조리시간명
+  FIRST_REG_DT          BigInt   // 최초등록일시
+  IMAGE_URL             String?  // 이미지 url
+  WEB_INGREDIENTS       String   // 웹 재료 (파싱된 재료)
+  WEB_RECIPE_STEPS      String   // 웹 레시피 단계 (상세 조리법)
+  WEB_STEP_COUNT        Int      // 웹 단계 수
+  WEB_INGREDIENT_COUNT  Int      // 웹 재료 수
+  DATA_COLLECTED        String   // 데이터 수집 여부
   
   // 시스템 생성일시
   createdAt        DateTime @default(now())
