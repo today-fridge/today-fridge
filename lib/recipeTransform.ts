@@ -1,4 +1,9 @@
-import { Recipe, RecipeIngredient, PrismaRecipe } from "@/types";
+import {
+  Recipe,
+  RecipeIngredient,
+  PrismaRecipe,
+  RecipeIngredientInfo,
+} from "@/types";
 
 // 난이도 텍스트를 숫자로 변환
 const getDifficultyNumber = (difficultyText: string): number => {
@@ -95,4 +100,71 @@ export const transformPrismaRecipes = (
   prismaRecipes: PrismaRecipe[]
 ): Recipe[] => {
   return prismaRecipes.map(transformPrismaRecipe);
+};
+
+// 재료 보유율 계산
+export const calculateAvailabilityRatio = (
+  recipe: Recipe,
+  ingredients: RecipeIngredientInfo[]
+) => {
+  const availableCount = recipe.ingredients.filter((recipeIngredient) =>
+    ingredients.some(
+      (userIngredient) =>
+        userIngredient.name.toLowerCase() ===
+          recipeIngredient.name.toLowerCase() &&
+        (userIngredient.available || userIngredient.quantity > 0)
+    )
+  ).length;
+  return Math.round((availableCount / recipe.ingredients.length) * 100);
+};
+
+// 부족한 재료
+export const getMissingIngredients = (
+  recipe: Recipe,
+  ingredients: RecipeIngredientInfo[]
+) => {
+  return recipe.ingredients
+    .filter(
+      (recipeIngredient) =>
+        !ingredients.some(
+          (userIngredient) =>
+            userIngredient.name.toLowerCase() ===
+              recipeIngredient.name.toLowerCase() &&
+            (userIngredient.available || userIngredient.quantity > 0)
+        )
+    )
+    .map((ingredient) => ingredient.name);
+};
+
+// 레시피 난이도
+export const getDifficultyText = (difficulty: number) => {
+  if (difficulty <= 2) return "쉬움";
+  if (difficulty === 3) return "보통";
+  return "어려움";
+};
+
+// 재료 보유율에 따른 색상
+export const getAvailabilityColor = (ratio: number) => {
+  if (ratio >= 80) return "#10B981"; // 초록색 (80% 이상)
+  if (ratio >= 50) return "#F59E0B"; // 주황색 (50% 이상)
+  return "#EF4444"; // 빨간색 (50% 미만)
+};
+
+// 재료 보유율에 따른 배경색
+export const getAvailabilityBgColor = (ratio: number) => {
+  if (ratio >= 80) return "#F0FDF4"; // 연한 초록색
+  if (ratio >= 50) return "#FFFBEB"; // 연한 주황색
+  return "#FEF2F2"; // 연한 빨간색
+};
+
+//레시피 재료 보유율 순으로 정렬하는 함수
+export const sortRecipesByAvailability = (
+  recipes: Recipe[],
+  userIngredients: RecipeIngredientInfo[]
+): Recipe[] => {
+  return recipes.sort((a, b) => {
+    const ratioA = calculateAvailabilityRatio(a, userIngredients);
+    const ratioB = calculateAvailabilityRatio(b, userIngredients);
+    return ratioB - ratioA;
+  });
 };
