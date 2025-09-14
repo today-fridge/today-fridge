@@ -1,84 +1,67 @@
 "use client";
 
-import { Search, Clock, Users, ArrowLeft, Star, XCircle } from "lucide-react";
-import { useState } from "react";
+import { Search, ArrowLeft } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Recipe, RecipeIngredientInfo } from "@/types";
 import Link from "next/link";
+import RecipeCard from "@/components/RecipeCard";
+import {
+  calculateAvailabilityRatio,
+  getMissingIngredients,
+} from "@/lib/recipeTransform";
 
 interface AllRecipesClientProps {
-  initialRecipes: Recipe[];
-  initialIngredients: RecipeIngredientInfo[];
+  recipes: Recipe[];
+  ingredients: RecipeIngredientInfo[];
 }
 
 export default function AllRecipesClient({
-  initialRecipes,
-  initialIngredients,
+  recipes,
+  ingredients,
 }: AllRecipesClientProps) {
   const [activeFilter, setActiveFilter] = useState("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
   const filters = ["전체", "쉬움", "보통", "어려움"];
-
-  // 재료 보유율 계산
-  const calculateAvailabilityRatio = (recipe: Recipe) => {
-    const availableCount = recipe.ingredients.filter((ing) =>
-      initialIngredients.some(
-        (userIng) =>
-          userIng.name.toLowerCase() === ing.name.toLowerCase() &&
-          userIng.available
-      )
-    ).length;
-    return Math.round((availableCount / recipe.ingredients.length) * 100);
-  };
-
-  // 부족한 재료 찾기
-  const getMissingIngredients = (recipe: Recipe) => {
-    return recipe.ingredients
-      .filter(
-        (ing) =>
-          !initialIngredients.some(
-            (userIng) =>
-              userIng.name.toLowerCase() === ing.name.toLowerCase() &&
-              userIng.available
-          )
-      )
-      .map((ing) => ing.name);
-  };
-
-  const filteredRecipes = initialRecipes
-    .map((recipe) => ({
+  const processedRecipes = useMemo(() => {
+    return recipes.map((recipe) => ({
       ...recipe,
-      availabilityRatio: calculateAvailabilityRatio(recipe),
-      missingIngredients: getMissingIngredients(recipe),
-    }))
-    .filter((recipe) => {
-      const matchesSearch =
-        recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        recipe.ingredients.some((ing) =>
-          ing.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+      availabilityRatio: calculateAvailabilityRatio(recipe, ingredients),
+      missingIngredients: getMissingIngredients(recipe, ingredients),
+    }));
+  }, [recipes, ingredients]);
 
-      let matchesFilter = true;
-      if (activeFilter === "쉬움") matchesFilter = recipe.difficulty <= 2;
-      else if (activeFilter === "보통") matchesFilter = recipe.difficulty === 3;
-      else if (activeFilter === "어려움")
-        matchesFilter = recipe.difficulty >= 4;
+  const filteredRecipes = useMemo(() => {
+    let filtered = processedRecipes;
 
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => b.availabilityRatio - a.availabilityRatio); // 재료 보유율 높은 순으로 정렬
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(
+        (recipe) =>
+          recipe.name.toLowerCase().includes(query) ||
+          recipe.ingredients.some((ing) =>
+            ing.name.toLowerCase().includes(query)
+          )
+      );
+    }
 
-  const getAvailabilityColor = (ratio: number) => {
-    if (ratio >= 80) return "#10B981";
-    if (ratio >= 50) return "#F59E0B";
-    return "#EF4444";
-  };
+    if (activeFilter !== "전체") {
+      filtered = filtered.filter((recipe) => {
+        switch (activeFilter) {
+          case "쉬움":
+            return recipe.difficulty <= 2;
+          case "보통":
+            return recipe.difficulty === 3;
+          case "어려움":
+            return recipe.difficulty >= 4;
+          default:
+            return true;
+        }
+      });
+    }
 
-  const getAvailabilityBgColor = (ratio: number) => {
-    if (ratio >= 80) return "#F0FDF4";
-    if (ratio >= 50) return "#FFFBEB";
-    return "#FEF2F2";
-  };
+    return filtered.sort((a, b) => b.availabilityRatio - a.availabilityRatio);
+  }, [processedRecipes, searchQuery, activeFilter]);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20 md:pb-0">
@@ -160,140 +143,17 @@ export default function AllRecipesClient({
         {filteredRecipes.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
-              <Link
-                href={`/recipes/${recipe.id}`}
+              <RecipeCard
                 key={recipe.id}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] cursor-pointer hover:shadow-lg hover:border-[#10B981]/20 active:scale-[0.98] transition-all duration-200"
-              >
-                {/* 재료 보유율 배지 */}
-                <div className="relative mb-4">
-                  <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
-                    <img
-                      src={recipe.imageUrl}
-                      alt={recipe.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div
-                    className="absolute top-3 right-3 px-3 py-1 rounded-full text-sm font-bold shadow-sm"
-                    style={{
-                      backgroundColor: getAvailabilityBgColor(
-                        recipe.availabilityRatio
-                      ),
-                      color: getAvailabilityColor(recipe.availabilityRatio),
-                    }}
-                  >
-                    보유율 {recipe.availabilityRatio}%
-                  </div>
-                  {recipe.availabilityRatio === 100 && (
-                    <div className="absolute top-3 left-3 bg-[#10B981] text-white px-2 py-1 rounded-full text-xs font-medium">
-                      ✨ 완벽
-                    </div>
-                  )}
-                </div>
-
-                {/* 레시피 정보 */}
-                <div>
-                  <h2 className="font-bold text-[#374151] mb-2 text-lg">
-                    {recipe.name}
-                  </h2>
-
-                  {/* 주요 재료 */}
-                  <div className="mb-3">
-                    <p className="text-sm text-[#6B7280]">
-                      <span className="font-medium">주재료:</span>{" "}
-                      {recipe.ingredients
-                        .slice(0, 3)
-                        .map((ing) => ing.name)
-                        .join(", ")}
-                    </p>
-                  </div>
-
-                  {/* 기본 정보 */}
-                  <div className="flex items-center gap-4 mb-4 text-sm text-[#6B7280]">
-                    <div className="flex items-center gap-1">
-                      <span className="flex items-center text-[#6B7280]">
-                        {Array.from(
-                          { length: recipe.difficulty },
-                          (_, index) => (
-                            <Star
-                              key={index}
-                              size={18}
-                              className="fill-yellow-400 text-yellow-400"
-                            />
-                          )
-                        )}
-                        <span className="ml-2">
-                          {recipe.difficulty <= 2
-                            ? "쉬움"
-                            : recipe.difficulty === 3
-                            ? "보통"
-                            : "어려움"}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{recipe.cookingTime}분</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>{recipe.servings}인분</span>
-                    </div>
-                  </div>
-
-                  {/* 재료 보유 현황 */}
-                  <div className="bg-[#F9FAFB] rounded-xl p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-[#374151] font-medium">
-                          재료 보유 현황
-                        </span>
-                        <span
-                          className="text-sm font-semibold"
-                          style={{
-                            color: getAvailabilityColor(
-                              recipe.availabilityRatio
-                            ),
-                          }}
-                        >
-                          {recipe.ingredients.length -
-                            recipe.missingIngredients.length}
-                          /{recipe.ingredients.length}개
-                        </span>
-                      </div>
-
-                      <div className="w-full bg-[#F3F4F6] rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full transition-all duration-300"
-                          style={{
-                            width: `${recipe.availabilityRatio}%`,
-                            backgroundColor: getAvailabilityColor(
-                              recipe.availabilityRatio
-                            ),
-                          }}
-                        ></div>
-                      </div>
-
-                      {/* 부족한 재료 표시 */}
-                      {recipe.missingIngredients.length > 0 && (
-                        <div className="mt-2 text-xs bg-[#FEF2F2] text-[#EF4444] p-2 rounded-lg flex gap-1">
-                          <XCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-[#EF4444] font-medium break-words">
-                            부족:&nbsp;
-                            {recipe.missingIngredients.join(", ")}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                recipe={recipe}
+                ingredients={ingredients}
+                layout="grid"
+              />
             ))}
           </div>
         ) : (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">😅</div>
+            <div className="text-6xl mb-4">🥺</div>
             <h3 className="text-xl font-semibold text-[#374151] mb-2">
               검색 결과가 없어요
             </h3>

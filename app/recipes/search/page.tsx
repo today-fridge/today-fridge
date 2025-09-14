@@ -36,10 +36,5 @@ export default async function AllRecipesScreen() {
   const recipes = await getAllRecipes();
   const ingredients = await getUserIngredients();
 
-  return (
-    <AllRecipesClient
-      initialRecipes={recipes}
-      initialIngredients={ingredients}
-    />
-  );
+  return <AllRecipesClient recipes={recipes} ingredients={ingredients} />;
 }
