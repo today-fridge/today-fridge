@@ -1,4 +1,5 @@
-import { Recipe, RecipeIngredientInfo } from "@/types";
+"use client";
+
 import Link from "next/link";
 import RecipeCard from "@/components/RecipeCard";
 import {
@@ -6,62 +7,23 @@ import {
   getMissingIngredients,
   sortRecipesByAvailability,
 } from "@/lib/recipeTransform";
+import { useAllRecipes, useUserIngredcients } from "@/hooks/useRecipeQuery";
 
-async function getRecipes(): Promise<Recipe[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/recipes`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) throw new Error("레시피를 불러오지 못했습니다.");
-  return res.json();
-}
-
-async function getUserIngredients(): Promise<RecipeIngredientInfo[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/ingredients`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) throw new Error("재료를 불러오지 못했습니다.");
-
-  const data = await res.json();
-  const items: RecipeIngredientInfo[] = Array.isArray(data)
-    ? data
-    : data.items ?? [];
-  return items.map((ing) => ({
-    id: String(ing.id),
-    name: ing.name,
-    category: ing.category,
-    quantity: Number(ing.quantity ?? 0),
-    unit: ing.unit,
-    available: ing.quantity > 0,
-  }));
-}
-
-export default async function RecipeSearch() {
-  const recipes = await getRecipes();
-  const ingredients = await getUserIngredients();
+export default function RecipeRecommendation() {
+  const { data: recipes } = useAllRecipes();
+  const { data: userIngredientList } = useUserIngredcients();
 
   // 보유율 높은 순으로 정렬하여 상위 3개만
-  const recommendedRecipes = sortRecipesByAvailability(recipes, ingredients)
+  const recommendedRecipes = sortRecipesByAvailability(
+    recipes,
+    userIngredientList
+  )
     .map((recipe) => ({
       ...recipe,
-      availability: calculateAvailabilityRatio(recipe, ingredients),
-      missingIngredients: getMissingIngredients(recipe, ingredients),
+      availability: calculateAvailabilityRatio({ recipe, userIngredientList }),
+      missingIngredients: getMissingIngredients({ recipe, userIngredientList }),
     }))
     .slice(0, 3);
-
-  const getAvailabilityBadge = (percentage: number) => {
-    if (percentage >= 80)
-      return { text: "모두 보유!", color: "#10B981", bgColor: "#F0FDF4" };
-    if (percentage >= 50)
-      return {
-        text: "재료가 절반만 있네요!",
-        color: "#F59E0B",
-        bgColor: "#FFFBEB",
-      };
-    return { text: "재료가 부족해요!", color: "#EF4444", bgColor: "#FEF2F2" };
-  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20 md:pb-0">
@@ -80,12 +42,11 @@ export default async function RecipeSearch() {
         {recommendedRecipes.length > 0 ? (
           <div className="space-y-6 mb-12">
             {recommendedRecipes.map((recipe, index) => {
-
               return (
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  ingredients={ingredients}
+                  ingredients={userIngredientList}
                   layout="list"
                   showRanking={true}
                   rankingIndex={index}

@@ -12,8 +12,7 @@ import {
   LeafyGreen,
   CheckCircle,
 } from "lucide-react";
-import { use, useState, useEffect } from "react";
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { use, useState } from "react";
 import Link from "next/link";
 import IngredientConsumptionModal from "@/components/IngredientConsumptionModal";
 import {
@@ -22,6 +21,7 @@ import {
   getDifficultyText,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
+import { useRecipe, useUserIngredcients } from "@/hooks/useRecipeQuery";
 
 export default function RecipeDetail({
   params,
@@ -29,47 +29,23 @@ export default function RecipeDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [userIngredients, setUserIngredients] = useState<
-    RecipeIngredientInfo[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
+  const {
+    data: recipe,
+    isLoading: isRecipeLoading,
+    isError: isRecipeError,
+  } = useRecipe(id);
+  const {
+    data: userIngredientList,
+    isLoading: isIngredientLoading,
+    isError: isIngredientError,
+  } = useUserIngredcients();
 
-        const recipeResponse = await fetch(`/api/recipes/${id}`);
-        if (!recipeResponse.ok) {
-          throw new Error("레시피를 찾을 수 없습니다.");
-        }
-        const recipeData = await recipeResponse.json();
-        const ingredientsResponse = await fetch("/api/ingredients");
-        const ingredientsData = await ingredientsResponse.json();
-
-        if (recipeData && ingredientsData) {
-          setRecipe(recipeData);
-          setUserIngredients(ingredientsData.items);
-        } else {
-          setError("레시피를 찾을 수 없습니다.");
-        }
-      } catch (err) {
-        console.error("데이터 가져오기 오류:", err);
-        setError("데이터를 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
+  const loading = isRecipeLoading || isIngredientLoading;
+  const error = isRecipeError || isIngredientError;
 
   const handleCookingComplete = () => {
     setIsModalOpen(true);
@@ -102,7 +78,7 @@ export default function RecipeDetail({
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">😅</div>
+          <div className="text-6xl mb-4">🥺</div>
           <h3 className="text-xl font-semibold text-[#374151] mb-2">
             레시피를 찾을 수 없어요
           </h3>
@@ -119,8 +95,14 @@ export default function RecipeDetail({
   }
 
   // 실제 보유율 계산
-  const availabilityRatio = calculateAvailabilityRatio(recipe, userIngredients);
-  const missingIngredients = getMissingIngredients(recipe, userIngredients);
+  const availabilityRatio = calculateAvailabilityRatio({
+    recipe,
+    userIngredientList,
+  });
+  const missingIngredients = getMissingIngredients({
+    recipe,
+    userIngredientList,
+  });
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -285,7 +267,7 @@ export default function RecipeDetail({
                       ingredient.name
                     );
                     const available = !isMissing;
-                    const userIngredient = userIngredients.find(
+                    const userIngredient = userIngredientList.find(
                       (userIng) =>
                         userIng.name.toLowerCase() ===
                         ingredient.name.toLowerCase()

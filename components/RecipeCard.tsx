@@ -19,13 +19,19 @@ interface RecipeCardProps {
 
 export default function RecipeCard({
   recipe,
-  ingredients,
+  ingredients: userIngredientList,
   layout = "grid",
   showRanking = false,
   rankingIndex = 0,
 }: RecipeCardProps) {
-  const availabilityRatio = calculateAvailabilityRatio(recipe, ingredients);
-  const missingIngredients = getMissingIngredients(recipe, ingredients);
+  const availabilityRatio = calculateAvailabilityRatio({
+    recipe,
+    userIngredientList,
+  });
+  const missingIngredients = getMissingIngredients({
+    recipe,
+    userIngredientList,
+  });
 
   // Grid layout
   if (layout === "grid") {

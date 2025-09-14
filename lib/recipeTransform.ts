@@ -103,12 +103,16 @@ export const transformPrismaRecipes = (
 };
 
 // 재료 보유율 계산
-export const calculateAvailabilityRatio = (
-  recipe: Recipe,
-  ingredients: RecipeIngredientInfo[]
-) => {
+export const calculateAvailabilityRatio = ({
+  userIngredientList,
+  recipe,
+}: {
+  userIngredientList: RecipeIngredientInfo[];
+  recipe?: Recipe;
+}) => {
+  if (!recipe) return 0;
   const availableCount = recipe.ingredients.filter((recipeIngredient) =>
-    ingredients.some(
+    userIngredientList.some(
       (userIngredient) =>
         userIngredient.name.toLowerCase() ===
           recipeIngredient.name.toLowerCase() &&
@@ -119,21 +123,26 @@ export const calculateAvailabilityRatio = (
 };
 
 // 부족한 재료
-export const getMissingIngredients = (
-  recipe: Recipe,
-  ingredients: RecipeIngredientInfo[]
-) => {
-  return recipe.ingredients
-    .filter(
-      (recipeIngredient) =>
-        !ingredients.some(
-          (userIngredient) =>
-            userIngredient.name.toLowerCase() ===
-              recipeIngredient.name.toLowerCase() &&
-            (userIngredient.available || userIngredient.quantity > 0)
-        )
-    )
-    .map((ingredient) => ingredient.name);
+export const getMissingIngredients = ({
+  userIngredientList,
+  recipe,
+}: {
+  userIngredientList: RecipeIngredientInfo[];
+  recipe?: Recipe;
+}) => {
+  return (
+    recipe?.ingredients
+      .filter(
+        (recipeIngredient) =>
+          !userIngredientList.some(
+            (userIngredient) =>
+              userIngredient.name.toLowerCase() ===
+                recipeIngredient.name.toLowerCase() &&
+              (userIngredient.available || userIngredient.quantity > 0)
+          )
+      )
+      .map((ingredient) => ingredient.name) ?? []
+  );
 };
 
 // 레시피 난이도
@@ -160,11 +169,17 @@ export const getAvailabilityBgColor = (ratio: number) => {
 //레시피 재료 보유율 순으로 정렬하는 함수
 export const sortRecipesByAvailability = (
   recipes: Recipe[],
-  userIngredients: RecipeIngredientInfo[]
+  userIngredientList: RecipeIngredientInfo[]
 ): Recipe[] => {
   return recipes.sort((a, b) => {
-    const ratioA = calculateAvailabilityRatio(a, userIngredients);
-    const ratioB = calculateAvailabilityRatio(b, userIngredients);
+    const ratioA = calculateAvailabilityRatio({
+      recipe: a,
+      userIngredientList,
+    });
+    const ratioB = calculateAvailabilityRatio({
+      recipe: b,
+      userIngredientList,
+    });
     return ratioB - ratioA;
   });
 };
