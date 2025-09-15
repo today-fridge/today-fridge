@@ -2,7 +2,6 @@
 
 import { Search, ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Recipe, RecipeIngredientInfo } from "@/types";
 import Link from "next/link";
 import RecipeCard from "@/components/RecipeCard";
 import {
@@ -81,7 +80,7 @@ export default function AllRecipesClient() {
             </div>
           </div>
           <p className="text-[#6B7280] ml-14">
-            보유 재료 순으로 정렬된 모든 레시피를 확인해보세요
+            보유 재료 순으로 정렬된 모든 레시피를 확인해보세요.
           </p>
         </div>
 

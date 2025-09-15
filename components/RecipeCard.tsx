@@ -1,4 +1,4 @@
-import { Clock, Users, Star, XCircle, SquareUserRound } from "lucide-react";
+import { Clock, Star, XCircle, SquareUserRound } from "lucide-react";
 import Link from "next/link";
 import { Recipe, RecipeIngredientInfo } from "@/types";
 import {
@@ -103,8 +103,8 @@ export default function RecipeCard({
               <span>{recipe.cookingTime}분</span>
             </div>
             <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span>{recipe.servings}인분</span>
+              <SquareUserRound className="w-4 h-4 flex-shrink-0" />
+              <span>{recipe.userName}</span>
             </div>
           </div>
 
