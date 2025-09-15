@@ -45,7 +45,7 @@ export interface PrismaRecipe {
 }
 
 export interface RecipeIngredientInfo {
-  id: string;
+  id: number;
   name: string;
   category: string;
   quantity: number;

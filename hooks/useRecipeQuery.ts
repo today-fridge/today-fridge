@@ -27,7 +27,7 @@ export const useUserIngredcients = () => {
     initialData: { items: [] },
     select: ({ items }) => {
       return items.map((ingredient) => ({
-        id: String(ingredient.id),
+        id: ingredient.id,
         name: ingredient.name,
         category: ingredient.category,
         quantity: Number(ingredient.quantity ?? 0),
