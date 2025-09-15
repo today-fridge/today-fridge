@@ -27,7 +27,7 @@ export interface Recipe {
 
 export interface RecipeIngredient {
   name: string;
-  quantity: string;
+  quantity: number;
   available?: boolean;
 }
 

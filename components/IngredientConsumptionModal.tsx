@@ -1,49 +1,44 @@
-import { useState } from 'react';
-import { X, Plus, Minus } from 'lucide-react';
-import { Recipe } from '../types';
+import { useState } from "react";
+import { X, Plus, Minus } from "lucide-react";
+import { Recipe } from "../types";
 
 interface IngredientConsumptionModalProps {
   recipe: Recipe;
   onClose: () => void;
-  onConfirm: (consumedIngredients: { name: string; quantity: number; unit: string }[]) => void;
+  onConfirm: (
+    consumedIngredients: { name: string; quantity: number }[]
+  ) => void;
 }
 
-export default function IngredientConsumptionModal({ 
-  recipe, 
-  onClose, 
-  onConfirm 
+export default function IngredientConsumptionModal({
+  recipe,
+  onClose,
+  onConfirm,
 }: IngredientConsumptionModalProps) {
   // 각 재료의 사용량 상태 관리
-  const [consumedQuantities, setConsumedQuantities] = useState<Record<string, number>>(() => {
+  const [consumedQuantities, setConsumedQuantities] = useState<
+    Record<string, number>
+  >(() => {
     const initial: Record<string, number> = {};
-    recipe.ingredients.forEach(ingredient => {
-      // 레시피 양을 숫자로 변환 (예: "1개" → 1, "0.5개" → 0.5)
-      const quantity = parseFloat(ingredient.quantity.replace(/[^0-9.]/g, '')) || 1;
-      initial[ingredient.name] = quantity;
+    recipe.ingredients.forEach((ingredient) => {
+      initial[ingredient.name] = ingredient.quantity;
     });
     return initial;
   });
 
-  // 재료별 단위 추출
-  const getUnit = (quantity: string) => {
-    const match = quantity.match(/[가-힣]+/);
-    return match ? match[0] : '개';
-  };
-
   // 수량 조절 함수
   const adjustQuantity = (ingredientName: string, delta: number) => {
-    setConsumedQuantities(prev => ({
+    setConsumedQuantities((prev) => ({
       ...prev,
-      [ingredientName]: Math.max(0, (prev[ingredientName] || 0) + delta)
+      [ingredientName]: Math.max(0, (prev[ingredientName] || 0) + delta),
     }));
   };
 
   // 확인 버튼 클릭
   const handleConfirm = () => {
-    const consumedIngredients = recipe.ingredients.map(ingredient => ({
+    const consumedIngredients = recipe.ingredients.map((ingredient) => ({
       name: ingredient.name,
       quantity: consumedQuantities[ingredient.name] || 0,
-      unit: getUnit(ingredient.quantity)
     }));
     onConfirm(consumedIngredients);
   };
@@ -51,11 +46,11 @@ export default function IngredientConsumptionModal({
   return (
     <>
       {/* 오버레이 */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 z-50 transition-opacity duration-200"
         onClick={onClose}
       />
-      
+
       {/* 모달 */}
       <div className="fixed bottom-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:w-auto md:min-w-[500px] md:max-w-[600px] bg-white rounded-t-2xl md:rounded-2xl z-50 shadow-2xl animate-slide-up md:animate-none">
         {/* 헤더 */}
@@ -80,30 +75,44 @@ export default function IngredientConsumptionModal({
         <div className="p-6 max-h-[50vh] md:max-h-[400px] overflow-y-auto">
           <div className="space-y-4">
             {recipe.ingredients.map((ingredient) => {
-              const originalQuantity = parseFloat(ingredient.quantity.replace(/[^0-9.]/g, '')) || 1;
-              const unit = getUnit(ingredient.quantity);
+              const originalQuantity = ingredient.quantity; // 이제 number
               const currentQuantity = consumedQuantities[ingredient.name] || 0;
-              
+
               return (
-                <div key={ingredient.name} className="bg-[#F9FAFB] rounded-xl p-4">
+                <div
+                  key={ingredient.name}
+                  className="bg-[#F9FAFB] rounded-xl p-4"
+                >
                   <div className="flex items-center justify-between">
                     {/* 재료 정보 */}
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">
-                        {ingredient.name === '당근' ? '🥕' :
-                         ingredient.name === '양파' ? '🧅' :
-                         ingredient.name === '마늘' ? '🧄' :
-                         ingredient.name === '계란' ? '🥚' :
-                         ingredient.name === '밥' ? '🍚' :
-                         ingredient.name === '대파' ? '🌿' :
-                         ingredient.name === '간장' ? '🍶' :
-                         ingredient.name === '우유' ? '🥛' :
-                         ingredient.name === '소금' ? '🧂' :
-                         ingredient.name === '식용유' ? '🛢️' :
-                         '🥄'}
+                        {ingredient.name === "당근"
+                          ? "🥕"
+                          : ingredient.name === "양파"
+                          ? "🧅"
+                          : ingredient.name === "마늘"
+                          ? "🧄"
+                          : ingredient.name === "계란"
+                          ? "🥚"
+                          : ingredient.name === "밥"
+                          ? "🍚"
+                          : ingredient.name === "대파"
+                          ? "🌿"
+                          : ingredient.name === "간장"
+                          ? "🍶"
+                          : ingredient.name === "우유"
+                          ? "🥛"
+                          : ingredient.name === "소금"
+                          ? "🧂"
+                          : ingredient.name === "식용유"
+                          ? "🛢️"
+                          : "🥄"}
                       </div>
                       <div>
-                        <div className="font-medium text-[#374151]">{ingredient.name}</div>
+                        <div className="font-medium text-[#374151]">
+                          {ingredient.name}
+                        </div>
                         <div className="text-sm text-[#6B7280]">
                           레시피: {ingredient.quantity}
                         </div>
@@ -112,8 +121,10 @@ export default function IngredientConsumptionModal({
 
                     {/* 수량 조절 */}
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-[#6B7280] mr-2">실제 사용:</span>
-                      
+                      <span className="text-sm text-[#6B7280] mr-2">
+                        실제 사용:
+                      </span>
+
                       <div className="flex items-center gap-2 bg-white rounded-lg border border-[#E5E7EB] p-1">
                         <button
                           onClick={() => adjustQuantity(ingredient.name, -0.5)}
@@ -122,13 +133,13 @@ export default function IngredientConsumptionModal({
                         >
                           <Minus className="w-4 h-4 text-[#6B7280]" />
                         </button>
-                        
+
                         <div className="px-3 py-1 min-w-[60px] text-center">
                           <span className="font-medium text-[#374151]">
-                            {currentQuantity}{unit}
+                            {currentQuantity}
                           </span>
                         </div>
-                        
+
                         <button
                           onClick={() => adjustQuantity(ingredient.name, 0.5)}
                           className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[#F3F4F6] transition-colors"
@@ -141,16 +152,22 @@ export default function IngredientConsumptionModal({
 
                   {/* 변경 알림 */}
                   {currentQuantity !== originalQuantity && (
-                    <div className={`mt-2 text-xs p-2 rounded-lg ${
-                      currentQuantity > originalQuantity 
-                        ? 'bg-[#FFFBEB] text-[#F59E0B]' 
-                        : currentQuantity < originalQuantity
-                        ? 'bg-[#F0FDF4] text-[#10B981]'
-                        : ''
-                    }`}>
-                      {currentQuantity > originalQuantity 
-                        ? `레시피보다 ${(currentQuantity - originalQuantity).toFixed(1)}${unit} 더 사용` 
-                        : `레시피보다 ${(originalQuantity - currentQuantity).toFixed(1)}${unit} 적게 사용`}
+                    <div
+                      className={`mt-2 text-xs p-2 rounded-lg ${
+                        currentQuantity > originalQuantity
+                          ? "bg-[#FFFBEB] text-[#F59E0B]"
+                          : currentQuantity < originalQuantity
+                          ? "bg-[#F0FDF4] text-[#10B981]"
+                          : ""
+                      }`}
+                    >
+                      {currentQuantity > originalQuantity
+                        ? `레시피보다 ${(
+                            currentQuantity - originalQuantity
+                          ).toFixed(1)} 더 사용`
+                        : `레시피보다 ${(
+                            originalQuantity - currentQuantity
+                          ).toFixed(1)} 적게 사용`}
                     </div>
                   )}
                 </div>
@@ -188,7 +205,7 @@ export default function IngredientConsumptionModal({
             transform: translateY(0);
           }
         }
-        
+
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
         }

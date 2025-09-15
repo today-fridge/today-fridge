@@ -63,7 +63,7 @@ const parseIngredients = (ingredientsText: string): RecipeIngredient[] => {
       const match = item.trim().match(pattern);
       if (match) {
         const name = match[1];
-        const qty = match[2] ? match[2].trim() : null;
+        const qty = match[2] ? match[2].trim() : 0;
         return { name: name, quantity: qty };
       }
       return null;
