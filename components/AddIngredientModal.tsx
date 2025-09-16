@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Plus, Calendar } from "lucide-react";
+import { X, Plus, Calendar,ReceiptText } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { Ingredient } from "@/types";
 import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
@@ -16,11 +16,11 @@ interface AddIngredientModalProps {
 // 폼 상태 타입
 type FormData = {
   name: string;
-  category: CategoryKo;     // 유니온 타입
+  category: CategoryKo; // 유니온 타입
   quantity: number;
   unit: string;
-  purchaseDate: string;     // yyyy-mm-dd
-  expiryDate: string;       // yyyy-mm-dd | ""
+  purchaseDate: string; // yyyy-mm-dd
+  expiryDate: string; // yyyy-mm-dd | ""
 };
 
 export default function AddIngredientModal({
@@ -32,7 +32,7 @@ export default function AddIngredientModal({
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    category: "기타", 
+    category: "기타",
     quantity: 1,
     unit: "개",
     purchaseDate: new Date().toISOString().split("T")[0],
@@ -63,7 +63,7 @@ export default function AddIngredientModal({
       // 서버가 기대하는 payload(한글 그대로)
       const payload = {
         name: formData.name.trim(),
-        category: formData.category as (typeof CATEGORY_KO)[number], 
+        category: formData.category as (typeof CATEGORY_KO)[number],
         quantity: Number(formData.quantity),
         unit: formData.unit,
         purchaseDate: formData.purchaseDate || undefined,
@@ -85,11 +85,11 @@ export default function AddIngredientModal({
 
       onAdd({
         name: created.name,
-        category: created.category,        // "야채" | "고기" | ...
+        category: created.category, // "야채" | "고기" | ...
         quantity: created.quantity,
         unit: created.unit,
         purchaseDate: created.purchaseDate, // "yyyy-mm-dd" 또는 ""
-        expiryDate: created.expiryDate,     // "yyyy-mm-dd" 또는 ""
+        expiryDate: created.expiryDate, // "yyyy-mm-dd" 또는 ""
         emoji: created.emoji,
       });
 
@@ -127,10 +127,15 @@ export default function AddIngredientModal({
               <Plus className="w-6 h-6 text-[#10B981]" />
             </div>
             <div>
-              <h2 id="add-ingredient-title" className="text-xl font-bold text-[#374151]">
+              <h2
+                id="add-ingredient-title"
+                className="text-xl font-bold text-[#374151]"
+              >
                 새 재료 추가
               </h2>
-              <p className="text-sm text-[#6B7280]">냉장고에 새로운 재료를 등록하세요</p>
+              <p className="text-sm text-[#6B7280]">
+                냉장고에 새로운 재료를 등록하세요
+              </p>
             </div>
           </div>
           <button
@@ -142,7 +147,26 @@ export default function AddIngredientModal({
             <X className="w-6 h-6 text-[#6B7280]" />
           </button>
         </div>
-
+        {/* 영수증 추가 */}{" "}
+        <div className=" p-6 -space-y-5">
+          {" "}
+          <label
+            className="w-full p-4 bg-[#10B981] text-white rounded-xl font-semibold hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            htmlFor="scanReceipt"
+          >
+            {" "}
+            <ReceiptText className="w-5 h-5"></ReceiptText> 영수증으로 추가하기{" "}
+          </label>{" "}
+          <input
+            type="file"
+            id="scanReceipt"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+            }}
+          ></input>{" "}
+        </div>
         {/* 폼 */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 재료명 */}
@@ -154,7 +178,9 @@ export default function AddIngredientModal({
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="예: 당근, 우유, 계란"
               className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
               required
@@ -180,7 +206,8 @@ export default function AddIngredientModal({
                   }`}
                   aria-pressed={formData.category === category}
                 >
-                  <span className="text-2xl">{emojiByKo[category]}</span>{/* ✅ 안전 인덱싱 */}
+                  <span className="text-2xl">{emojiByKo[category]}</span>
+                  {/* ✅ 안전 인덱싱 */}
                   <span className="text-xs font-medium">{category}</span>
                 </button>
               ))}
