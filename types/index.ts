@@ -5,8 +5,8 @@ export interface Ingredient {
   quantity: number;
   unit: string;
   purchaseDate: string;
-  expiryDate: string;
-  daysLeft: number | null;
+  expiryDate?: string;
+  daysLeft: number;
   emoji: string;
   available: boolean;
 }
