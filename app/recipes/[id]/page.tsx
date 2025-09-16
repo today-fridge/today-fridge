@@ -12,100 +12,40 @@ import {
   LeafyGreen,
   CheckCircle,
 } from "lucide-react";
-import { use, useState, useEffect } from "react";
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { use, useState } from "react";
 import Link from "next/link";
 import IngredientConsumptionModal from "@/components/IngredientConsumptionModal";
+import {
+  calculateAvailabilityRatio,
+  getAvailabilityColor,
+  getDifficultyText,
+  getMissingIngredients,
+} from "@/lib/recipeTransform";
+import { useRecipe, useUserIngredcients } from "@/hooks/useRecipeQuery";
 
-export default function RecipeDetailScreen({
+export default function RecipeDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [userIngredients, setUserIngredients] = useState<
-    RecipeIngredientInfo[]
-  >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<boolean[]>([]);
+  // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
+  const {
+    data: recipe,
+    isLoading: isRecipeLoading,
+    isError: isRecipeError,
+  } = useRecipe(id);
+  const {
+    data: userIngredientList,
+    isLoading: isIngredientLoading,
+    isError: isIngredientError,
+  } = useUserIngredcients();
 
-        const recipeResponse = await fetch(`/api/recipes/${id}`);
-        if (!recipeResponse.ok) {
-          throw new Error("레시피를 찾을 수 없습니다.");
-        }
-        const recipeData = await recipeResponse.json();
-        const ingredientsResponse = await fetch("/api/ingredients");
-        const ingredientsData = await ingredientsResponse.json();
-
-        if (recipeData && ingredientsData) {
-          setRecipe(recipeData);
-          setUserIngredients(ingredientsData.items);
-          setCompletedSteps(new Array(recipeData.steps.length).fill(false));
-        } else {
-          setError("레시피를 찾을 수 없습니다.");
-        }
-      } catch (err) {
-        console.error("데이터 가져오기 오류:", err);
-        setError("데이터를 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
-
-  // 재료 보유 여부 확인
-  const checkIngredientAvailable = (ingredientName: string) => {
-    return userIngredients.some(
-      (userIng) =>
-        userIng.name.toLowerCase() === ingredientName.toLowerCase() &&
-        userIng.quantity > 0
-    );
-  };
-
-  // 재료 보유 현황 계산
-  const calculateAvailability = () => {
-    if (!recipe) return { available: 0, total: 0, percentage: 0 };
-
-    const availableCount = recipe.ingredients.filter((ing) =>
-      checkIngredientAvailable(ing.name)
-    ).length;
-
-    return {
-      available: availableCount,
-      total: recipe.ingredients.length,
-      percentage: Math.round(
-        (availableCount / recipe.ingredients.length) * 100
-      ),
-    };
-  };
-
-  // 부족한 재료 목록
-  const getMissingIngredients = () => {
-    if (!recipe) return [];
-    return recipe.ingredients.filter(
-      (ing) => !checkIngredientAvailable(ing.name)
-    );
-  };
-
-  const toggleStepComplete = (index: number) => {
-    const newCompleted = [...completedSteps];
-    newCompleted[index] = !newCompleted[index];
-    setCompletedSteps(newCompleted);
-  };
+  const loading = isRecipeLoading || isIngredientLoading;
+  const error = isRecipeError || isIngredientError;
 
   const handleCookingComplete = () => {
     setIsModalOpen(true);
@@ -138,7 +78,7 @@ export default function RecipeDetailScreen({
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">😅</div>
+          <div className="text-6xl mb-4">🥺</div>
           <h3 className="text-xl font-semibold text-[#374151] mb-2">
             레시피를 찾을 수 없어요
           </h3>
@@ -154,16 +94,18 @@ export default function RecipeDetailScreen({
     );
   }
 
-  const completedCount = completedSteps.filter(Boolean).length;
-  const progressPercentage = (completedCount / recipe.steps.length) * 100;
-
   // 실제 보유율 계산
-  const availability = calculateAvailability();
-  const missingIngredients = getMissingIngredients();
+  const availabilityRatio = calculateAvailabilityRatio({
+    recipe,
+    userIngredientList,
+  });
+  const missingIngredients = getMissingIngredients({
+    recipe,
+    userIngredientList,
+  });
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
-      {/* 히어로 이미지 */}
       <div className="relative">
         <div className="w-full h-64 lg:h-80 xl:h-96 bg-gray-100 overflow-hidden">
           <img
@@ -173,8 +115,9 @@ export default function RecipeDetailScreen({
           />
         </div>
 
+        {/* TODO: 좋아요, 뒤로가기, 공유하기 버튼 */}
         {/* 오버레이 헤더 */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 lg:p-6">
+        {/* <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 lg:p-6">
           <Link
             href="/recipes"
             className="bg-black/20 backdrop-blur-sm text-white p-3 rounded-full hover:bg-black/30 transition-all duration-200"
@@ -196,7 +139,7 @@ export default function RecipeDetailScreen({
               />
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* 그라데이션 오버레이 */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -220,11 +163,7 @@ export default function RecipeDetailScreen({
                     />
                   ))}
                   <span className="ml-2">
-                    {recipe.difficulty <= 2
-                      ? "쉬움"
-                      : recipe.difficulty === 3
-                      ? "보통"
-                      : "어려움"}
+                    {getDifficultyText(recipe.difficulty)}
                   </span>
                 </span>
               </div>
@@ -239,24 +178,32 @@ export default function RecipeDetailScreen({
             </div>
           </div>
 
-          {/* ✅ 재료 보유 현황 */}
-          <div className="bg-gradient-to-r from-[#F0FDF4] to-[#F0FDF4]/50 border border-[#10B981]/20 rounded-xl p-4">
+          {/* 재료 보유 현황 */}
+          <div className="bg-gradient-to-r bg-[#F9FAFB] border text-[#374151] rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-[#047857]">
-                재료 보유 현황
-              </span>
-              <span className="text-[#047857] font-bold">
-                {availability.available}/{availability.total}개
+              <span className="text-[#374151] font-medium">재료 보유 현황</span>
+              <span
+                className="text-sm font-semibold"
+                style={{
+                  color: getAvailabilityColor(availabilityRatio),
+                }}
+              >
+                {recipe.ingredients.length - missingIngredients.length}/
+                {recipe.ingredients.length}개
               </span>
             </div>
+
             <div className="w-full bg-[#E5E7EB] rounded-full h-3">
               <div
-                className="h-3 bg-gradient-to-r from-[#10B981] to-[#059669] rounded-full transition-all duration-500"
-                style={{ width: `${availability.percentage}%` }}
+                className="h-3 rounded-full transition-all duration-300"
+                style={{
+                  width: `${availabilityRatio}%`,
+                  backgroundColor: getAvailabilityColor(availabilityRatio),
+                }}
               ></div>
             </div>
-            <p className="text-sm text-[#047857] mt-2">
-              {availability.available === availability.total
+            <p className="text-sm text-[#374151] mt-2">
+              {availabilityRatio === 100
                 ? "🎉 모든 재료를 보유하고 있어요!"
                 : `🛒 ${missingIngredients.length}개 재료가 더 필요해요`}
             </p>
@@ -277,55 +224,24 @@ export default function RecipeDetailScreen({
                     조리법
                   </h2>
                 </div>
-                {completedCount > 0 && (
-                  <div className="text-right">
-                    <div className="text-sm text-[#6B7280]">진행률</div>
-                    <div className="text-lg font-bold text-[#10B981]">
-                      {Math.round(progressPercentage)}%
-                    </div>
-                  </div>
-                )}
               </div>
-
-              {/* 진행률 바 */}
-              {completedCount > 0 && (
-                <div className="mb-6">
-                  <div className="w-full bg-[#E5E7EB] rounded-full h-2">
-                    <div
-                      className="h-2 bg-gradient-to-r from-[#10B981] to-[#059669] rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-4">
                 {recipe.steps.map((step, index) => (
                   <div
                     key={index}
-                    className={`flex gap-4 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      completedSteps[index]
-                        ? "border-[#10B981] bg-[#F0FDF4]"
-                        : "border-[#E5E7EB] bg-white hover:border-[#10B981]/30"
-                    }`}
+                    className={
+                      "flex gap-4 p-4 rounded-xl border-2 transition-all duration-200 border-[#E5E7EB] bg-white hover:border-[#10B981]/30"
+                    }
                   >
-                    <button
-                      onClick={() => toggleStepComplete(index)}
-                      className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-bold text-sm lg:text-base flex-shrink-0 transition-all duration-200 ${
-                        completedSteps[index]
-                          ? "bg-[#10B981] text-white"
-                          : "bg-[#E5E7EB] text-[#6B7280] hover:bg-[#10B981] hover:text-white"
-                      }`}
+                    <div
+                      className={
+                        "w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-bold text-sm lg:text-base flex-shrink-0 transition-all duration-200 bg-[#E5E7EB] text-[#6B7280]"
+                      }
                     >
-                      {completedSteps[index] ? "✓" : index + 1}
-                    </button>
-                    <p
-                      className={`leading-relaxed lg:text-lg flex-1 ${
-                        completedSteps[index]
-                          ? "text-[#047857] line-through"
-                          : "text-[#374151]"
-                      }`}
-                    >
+                      {index + 1}
+                    </div>
+                    <p className="flex items-center leading-relaxed lg:text-lg flex-1 text-[#374151]">
                       {step}
                     </p>
                   </div>
@@ -347,7 +263,15 @@ export default function RecipeDetailScreen({
                 </h2>
                 <div className="space-y-3">
                   {recipe.ingredients.map((ingredient, index) => {
-                    const available = checkIngredientAvailable(ingredient.name); // ✅ 랜덤 말고 실제 체크
+                    const isMissing = missingIngredients.includes(
+                      ingredient.name
+                    );
+                    const available = !isMissing;
+                    const userIngredient = userIngredientList.find(
+                      (userIng) =>
+                        userIng.name.toLowerCase() ===
+                        ingredient.name.toLowerCase()
+                    );
 
                     return (
                       <div
@@ -371,11 +295,13 @@ export default function RecipeDetailScreen({
                           >
                             {ingredient.name}
                           </span>
-                          {available && Number(ingredient.quantity) > 0 && (
-                            <span className="text-xs text-[#047857] bg-[#DCFCE7] px-2 py-1 rounded-full">
-                              보유: {Number(ingredient.quantity)}개
-                            </span>
-                          )}
+                          {available &&
+                            userIngredient &&
+                            userIngredient.quantity > 0 && (
+                              <span className="text-xs text-[#047857] bg-[#DCFCE7] px-2 py-1 rounded-full">
+                                보유: {userIngredient.quantity}개
+                              </span>
+                            )}
                         </div>
                         <span className="text-[#6B7280] text-sm font-medium">
                           {ingredient.quantity}

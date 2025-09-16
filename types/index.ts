@@ -27,7 +27,7 @@ export interface Recipe {
 
 export interface RecipeIngredient {
   name: string;
-  quantity: string;
+  quantity: number;
   available?: boolean;
 }
 
@@ -45,7 +45,7 @@ export interface PrismaRecipe {
 }
 
 export interface RecipeIngredientInfo {
-  id: string;
+  id: number;
   name: string;
   category: string;
   quantity: number;
