@@ -33,19 +33,12 @@ export default function RecipeDetail({
   // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const {
-    data: recipe,
-    isLoading: isRecipeLoading,
-    isError: isRecipeError,
-  } = useRecipe(id);
+  const { data: recipe } = useRecipe(id);
   const {
     data: userIngredientList,
     isLoading: isIngredientLoading,
     isError: isIngredientError,
   } = useUserIngredcients();
-
-  const loading = isRecipeLoading || isIngredientLoading;
-  const error = isRecipeError || isIngredientError;
 
   const handleCookingComplete = () => {
     setIsModalOpen(true);
@@ -59,40 +52,6 @@ export default function RecipeDetail({
     console.log("사용한 재료:", consumedIngredients);
     setIsModalOpen(false);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🍳</div>
-          <h3 className="text-xl font-semibold text-[#374151] mb-2">
-            레시피를 불러오는 중이에요
-          </h3>
-          <p className="text-[#6B7280]">잠시만 기다려주세요!</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !recipe) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🥺</div>
-          <h3 className="text-xl font-semibold text-[#374151] mb-2">
-            레시피를 찾을 수 없어요
-          </h3>
-          <p className="text-[#6B7280] mb-6">{error}</p>
-          <Link
-            href="/recipes"
-            className="bg-[#10B981] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#059669] transition-all duration-200"
-          >
-            레시피 목록으로 돌아가기
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   // 실제 보유율 계산
   const availabilityRatio = calculateAvailabilityRatio({

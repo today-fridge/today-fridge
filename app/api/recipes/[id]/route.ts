@@ -12,7 +12,7 @@ export async function GET(
     if (isNaN(recipeId)) {
       return NextResponse.json(
         { error: "올바르지 않은 레시피 ID입니다." },
-        { status: 400 }
+        { status: 404 }
       );
     }
 

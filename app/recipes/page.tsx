@@ -39,30 +39,21 @@ export default function RecipeRecommendation() {
         </div>
 
         {/* 추천 레시피 카드들 */}
-        {recommendedRecipes.length > 0 ? (
-          <div className="space-y-6 mb-12">
-            {recommendedRecipes.map((recipe, index) => {
-              return (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  ingredients={userIngredientList}
-                  layout="list"
-                  showRanking={true}
-                  rankingIndex={index}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🍳</div>
-            <h3 className="text-xl font-semibold text-[#374151] mb-2">
-              레시피를 불러오는 중이에요
-            </h3>
-            <p className="text-[#6B7280]">잠시만 기다려주세요!</p>
-          </div>
-        )}
+
+        <div className="space-y-6 mb-12">
+          {recommendedRecipes.map((recipe, index) => {
+            return (
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                ingredients={userIngredientList}
+                layout="list"
+                showRanking={true}
+                rankingIndex={index}
+              />
+            );
+          })}
+        </div>
 
         {/* 더 많은 레시피 버튼 */}
         <div className="text-center">
