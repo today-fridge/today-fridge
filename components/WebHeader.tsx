@@ -11,6 +11,7 @@ export default function WebHeader() {
   const nav = [
     { href: "/", label: "냉장고 관리", icon: "📦" },
     { href: "/recipes", label: "레시피", icon: "🔍" },
+    { href: "/records", label: "내 기록", icon: "📊" },
   ] as const;
 
   const isActive = (href: string) => {
