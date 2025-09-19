@@ -1,6 +1,6 @@
 import { Clock, Star, XCircle, SquareUserRound } from "lucide-react";
 import Link from "next/link";
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { Recipe, IngredientForRecipe } from "@/types";
 import {
   calculateAvailabilityRatio,
   getAvailabilityBgColor,
@@ -11,7 +11,7 @@ import {
 
 interface RecipeCardProps {
   recipe: Recipe;
-  ingredients: RecipeIngredientInfo[];
+  ingredients: IngredientForRecipe[];
   layout?: "grid" | "list";
   showRanking?: boolean;
   rankingIndex?: number;

@@ -1,4 +1,4 @@
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { Recipe, IngredientForRecipe } from "@/types";
 import { notFound } from "next/navigation";
 
 export const getAllRecipes = async (): Promise<Recipe[]> => {
@@ -21,7 +21,7 @@ export const getOneRecipe = async (id: string): Promise<Recipe> => {
 };
 
 export const getUserIngredients = async (): Promise<{
-  items: RecipeIngredientInfo[];
+  items: IngredientForRecipe[];
 }> => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/ingredients`
