@@ -31,8 +31,8 @@ interface ExtractedItem {
   category: CategoryKo;
   quantity: number;
   unit: string;
-  purchaseDate: string;
-  expiryDate?: string;
+  purchaseDate: string; //yyyy-mm-dd
+  expiryDate?: string; //yyyy-mm-dd
 }
 
 export default function AddIngredientModal({
@@ -80,21 +80,8 @@ export default function AddIngredientModal({
 
   // ocr 응답에서 텍스트 추출
   const extractTextFromOcrResult = (ocrResult: any) => {
-    console.log("OCR 결과 전체 구조:", JSON.stringify(ocrResult, null, 2));
-
-    let extractedText: [] | null = null;
-
-    if (ocrResult.images && ocrResult.images[0]) {
-      const image = ocrResult.images[0];
-
-      // 수정
-      if (image?.receipt?.result?.subResults?.length) {
-        const { items } = image.receipt.result.subResults[0];
-        extractedText = items;
-      } else {
-        console.log("정보없습니다.");
-      }
-    }
+    const extractedText:[] | null =
+      ocrResult?.images?.[0]?.receipt?.result?.subResults?.[0]?.items ?? null;
     return extractedText;
   };
 
@@ -113,7 +100,6 @@ export default function AddIngredientModal({
       return;
     }
 
-    console.log("추출된 텍스트:", extractedText);
 
     // // ExtractedItem 형태로 변환 (DB 저장용)
     const items: ExtractedItem[] = extractedText.map((item) => ({
@@ -188,7 +174,7 @@ export default function AddIngredientModal({
       }
 
       const ocrResult = await ocrResponse.json();
-      setOcrDebugInfo(ocrResult); // 디버깅용 저장
+      // setOcrDebugInfo(ocrResult); // 디버깅용 저장
       const extractedText = extractTextFromOcrResult(ocrResult);
 
       if (!extractedText) {
@@ -233,11 +219,8 @@ export default function AddIngredientModal({
     }
   };
 
-  // 추출된 상품을 DB에 저장하는 함수 (기존 API 엔드포인트 사용)
+  // 추출된 상품을 DB에 저장하는 함수
   const saveExtractedItemToDB = async (item: ExtractedItem) => {
-    console.log("=== DB 저장 시작 ===");
-    console.log("저장할 데이터:", item);
-
     const payload = {
       name: item.name,
       category: item.category, // 이미 한글 카테고리
@@ -247,18 +230,10 @@ export default function AddIngredientModal({
       expiryDate: item.expiryDate || undefined,
     };
 
-    console.log("API 요청 payload:", payload);
-
     const res = await fetch("/api/ingredients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    });
-
-    console.log("API 응답 상태:", {
-      status: res.status,
-      statusText: res.statusText,
-      ok: res.ok,
     });
 
     if (!res.ok) {
@@ -276,8 +251,8 @@ export default function AddIngredientModal({
     }
 
     const created = await res.json();
-    console.log("DB 저장 성공:", created);
-    console.log("=== DB 저장 완료 ===");
+    // console.log("DB 저장 성공:", created);
+    // console.log("=== DB 저장 완료 ===");
 
     return created;
   };
@@ -289,16 +264,6 @@ export default function AddIngredientModal({
       console.log("추가할 상품:", item);
 
       const created = await saveExtractedItemToDB(item);
-
-      console.log("UI에 전달할 데이터:", {
-        name: created.name,
-        category: created.category,
-        quantity: created.quantity,
-        unit: created.unit,
-        purchaseDate: created.purchaseDate,
-        expiryDate: created.expiryDate,
-        emoji: created.emoji,
-      });
 
       onAdd({
         name: created.name,
@@ -369,13 +334,6 @@ export default function AddIngredientModal({
         }
       }
 
-      console.log("=== 일괄 추가 결과 ===");
-      console.log(`성공: ${results.length}개`);
-      console.log(`실패: ${errors.length}개`);
-      if (errors.length > 0) {
-        console.log("실패한 상품들:", errors);
-      }
-
       setExtractedItems([]);
       setShowExtractedItems(false);
 
@@ -403,6 +361,7 @@ export default function AddIngredientModal({
 
   if (!isOpen) return null;
 
+  //수동 상품 추가 함수
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
@@ -503,7 +462,7 @@ export default function AddIngredientModal({
         {/* 영수증 추가 */}
 
         <div className="p-6 space-y-4">
-          {/* <button onClick={handleTest}>테스트</button> */}
+          <button onClick={handleTest}>테스트</button>
           <label
             className={`w-full p-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer ${
               scanningReceipt
