@@ -32,10 +32,11 @@ export default function WebHeader() {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
+              {/* PR #13(favicon 관련) 머지 후 아이콘 교체 예정 */}
               <div className="text-2xl lg:text-3xl">🌿</div>
               <div>
                 <h1 className="text-lg lg:text-xl font-semibold text-[#374151]">
-                  나만의 냉장고 요리사
+                  오늘의 냉장고
                 </h1>
                 <p className="hidden lg:block text-xs text-[#6B7280]">
                   신선한 재료로 건강한 요리를
@@ -63,14 +64,18 @@ export default function WebHeader() {
 
             {/* 우측 아이콘들 */}
             <div className="flex items-center gap-2">
+              {/* TODO: 카카오 알림까지 진행하면 해당 주석 해제 예정 */}
               {/* <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
                 <Bell className="w-5 h-5 text-[#6B7280]" />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#EF4444] rounded-full" />
               </button> */}
-              <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors">
+              <Link
+                href="/login"
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              >
                 <User className="w-5 h-5 text-[#6B7280]" />
                 <span className="text-sm text-[#374151]">로그인</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -84,15 +89,19 @@ export default function WebHeader() {
               <div className="text-xl">🌿</div>
               <h1 className="font-semibold text-[#374151]">냉장고 요리사</h1>
             </Link>
+            {/* TODO: 카카오 알림까지 진행하면 해당 주석 해제 예정 */}
             {/* <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
               <Bell className="w-5 h-5 text-[#6B7280]" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#EF4444] rounded-full" />
             </button> */}
 
             {/* 모바일 로그인 버튼 */}
-            <button className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative">
+            <Link
+              href="/login"
+              className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative"
+            >
               <User className="w-5 h-5 text-[#6B7280]" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
