@@ -46,7 +46,7 @@ export default function RecipeRecommendation() {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                ingredients={userIngredientList}
+                userIngredientList={userIngredientList}
                 layout="list"
                 showRanking={true}
                 rankingIndex={index}

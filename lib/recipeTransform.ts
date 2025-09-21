@@ -1,4 +1,10 @@
 import {
+  INGREDIENT_UNITS_MAP,
+  INGREDIENT_UNITS_NUMBER_REGEX,
+  INGREDIENT_UNITS_PATTERN,
+  INGREDIENT_UNITS_REGEX,
+} from "@/constants/recipe";
+import {
   Recipe,
   RecipeIngredient,
   PrismaRecipe,
@@ -26,36 +32,12 @@ const getCookingTimeNumber = (timeText: string): number => {
   return totalMinutes > 0 ? totalMinutes : 10;
 };
 
-// 통합된 단위 설정
-const INGREDIENT_UNITS = {
-  COUNT: ["개", "알", "송이", "장", "봉지", "공기"],
-  WEIGHT_VOLUME: [
-    "g",
-    "kg",
-    "ml",
-    "L",
-    "컵",
-    "큰술",
-    "작은술",
-    "스푼",
-    "숟가락",
-    "T",
-    "t",
-  ],
-  ABSTRACT: ["줌", "적당량", "약간", "조금"],
-};
-
-const UNITS = Object.values(INGREDIENT_UNITS).flat();
-const pattern = new RegExp(
-  `([가-힣a-zA-Z]+)\\s*([\\d./~\\-]*\\s*(?:${UNITS.join("|")})?)?`
-);
-
 const parseIngredients = (ingredientsText: string): RecipeIngredient[] => {
   return ingredientsText
     .split(",")
     .filter((item) => item.trim())
     .map((item) => {
-      const match = item.trim().match(pattern);
+      const match = item.trim().match(INGREDIENT_UNITS_PATTERN);
       if (match) {
         const name = match[1];
         const qty = match[2] ? match[2].trim() : 0;
@@ -179,25 +161,13 @@ export const sortRecipesByAvailability = (
   });
 };
 
-const UNIT_MAP = new Map<string, "COUNT" | "WEIGHT_VOLUME" | "ABSTRACT">(
-  Object.entries(INGREDIENT_UNITS).flatMap(([type, units]) =>
-    units.map((unit) => [unit, type as "COUNT" | "WEIGHT_VOLUME" | "ABSTRACT"])
-  )
-);
-
-const UNIT_REGEX = new RegExp(
-  `(${Array.from(UNIT_MAP.keys()).join("|")})`,
-  "i"
-);
-const NUMBER_REGEX = /([0-9.]+)/;
-
 const getUnitType = (
   quantityText: string
 ): "COUNT" | "WEIGHT_VOLUME" | "ABSTRACT" => {
-  const match = quantityText.match(UNIT_REGEX);
+  const match = quantityText.match(INGREDIENT_UNITS_REGEX);
   if (!match) return "COUNT";
 
-  return UNIT_MAP.get(match[1].toLowerCase()) || "COUNT";
+  return INGREDIENT_UNITS_MAP.get(match[1].toLowerCase()) || "COUNT";
 };
 
 // 재료 정규화 함수
@@ -206,8 +176,9 @@ export const normalizeIngredientForDisplay = (ingredient: RecipeIngredient) => {
   const quantityText = quantity.toString();
   const unitType = getUnitType(quantityText);
 
-  const numericMatch = quantityText.match(NUMBER_REGEX);
-  const numericValue = numericMatch ? parseFloat(numericMatch[1]) : 0;
+  const numericMatch = quantityText.match(INGREDIENT_UNITS_NUMBER_REGEX);
+  const numericValue =
+    numericMatch && numericMatch[1] ? parseFloat(numericMatch[1]) : 0;
 
   let displayQuantity = 0;
 

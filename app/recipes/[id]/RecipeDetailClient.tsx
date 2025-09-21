@@ -1,14 +1,9 @@
 "use client";
 
 import {
-  Heart,
-  Clock,
-  SquareUserRound,
   XCircle,
   ArrowLeft,
-  Share,
   BookOpen,
-  Star,
   LeafyGreen,
   CheckCircle,
 } from "lucide-react";
@@ -16,15 +11,17 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   calculateAvailabilityRatio,
-  getAvailabilityColor,
-  getDifficultyText,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
 import { useRecipe, useUserIngredcients } from "@/hooks/useRecipeQuery";
 import { CookingCompleteModal } from "@/components/CookingCompleteModal";
 import { RecipeIngredient } from "@/types";
+import RecipeDetailHeader from "./RecipeDetailHeader";
+import InventoryStatus from "./InventoryStatus";
+import RecipeTip from "./RecipeTip";
 
 export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
+  // TODO: 시간 나면 "좋아요" 기능 추가 예정
   // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -99,68 +96,15 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
       <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
         {/* 레시피 헤더 정보 */}
         <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-[#E5E7EB] mb-8">
-          <div className="mb-6">
-            <h1 className="text-2xl lg:text-4xl font-bold text-[#374151] mb-3">
-              {recipe.name}
-            </h1>
-            <div className="flex items-center gap-6 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center text-[#6B7280]">
-                  {Array.from({ length: recipe.difficulty }, (_, index) => (
-                    <Star
-                      key={index}
-                      size={18}
-                      className="fill-yellow-400 text-yellow-400"
-                    />
-                  ))}
-                  <span className="ml-2">
-                    {getDifficultyText(recipe.difficulty)}
-                  </span>
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-[#10B981]" />
-                <span className="text-[#6B7280]">{recipe.cookingTime}분</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <SquareUserRound className="w-5 h-5 text-[#10B981]" />
-                <span className="text-[#6B7280]">{recipe.userName}</span>
-              </div>
-            </div>
-          </div>
+          <RecipeDetailHeader recipe={recipe} />
 
           {/* 재료 보유 현황 */}
-          <div className="bg-gradient-to-r bg-[#F9FAFB] border text-[#374151] rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#374151] font-medium">재료 보유 현황</span>
-              <span
-                className="text-sm font-semibold"
-                style={{
-                  color: getAvailabilityColor(availabilityRatio),
-                }}
-              >
-                {recipe.ingredients.length - missingIngredients.length}/
-                {recipe.ingredients.length}개
-              </span>
-            </div>
-
-            <div className="w-full bg-[#E5E7EB] rounded-full h-3">
-              <div
-                className="h-3 rounded-full transition-all duration-300"
-                style={{
-                  width: `${availabilityRatio}%`,
-                  backgroundColor: getAvailabilityColor(availabilityRatio),
-                }}
-              ></div>
-            </div>
-            <p className="text-sm text-[#374151] mt-2">
-              {availabilityRatio === 100
-                ? "🎉 모든 재료를 보유하고 있어요!"
-                : `🛒 ${missingIngredients.length}개 재료가 더 필요해요`}
-            </p>
-          </div>
+          <InventoryStatus
+            recipe={recipe}
+            availabilityRatio={availabilityRatio}
+            missingIngredients={missingIngredients}
+          />
         </div>
-
         {/* 메인 콘텐츠 */}
         <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-8 lg:space-y-0">
           {/* 조리법 */}
@@ -180,7 +124,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
               <div className="space-y-4">
                 {recipe.steps.map((step, index) => (
                   <div
-                    key={index}
+                    key={`recipeId-${recipe.id}-step-${index}`}
                     className={
                       "flex gap-4 p-4 rounded-xl border-2 transition-all duration-200 border-[#E5E7EB] bg-white hover:border-[#10B981]/30"
                     }
@@ -213,20 +157,17 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                   필요한 재료
                 </h2>
                 <div className="space-y-3">
-                  {recipe.ingredients.map((ingredient, index) => {
-                    const isMissing = missingIngredients.includes(
-                      ingredient.name
-                    );
+                  {recipe.ingredients.map(({ name, quantity }, _) => {
+                    const isMissing = missingIngredients.includes(name);
                     const available = !isMissing;
                     const userIngredient = userIngredientList.find(
                       (userIng) =>
-                        userIng.name.toLowerCase() ===
-                        ingredient.name.toLowerCase()
+                        userIng.name.toLowerCase() === name.toLowerCase()
                     );
 
                     return (
                       <div
-                        key={index}
+                        key={name}
                         className={`flex items-center justify-between p-3 rounded-xl ${
                           available
                             ? "bg-[#F0FDF4] border border-[#10B981]/20"
@@ -244,7 +185,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                               available ? "text-[#047857]" : "text-[#DC2626]"
                             }`}
                           >
-                            {ingredient.name}
+                            {name}
                           </span>
                           {available &&
                             userIngredient &&
@@ -255,7 +196,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                             )}
                         </div>
                         <span className="text-[#6B7280] text-sm font-medium">
-                          {ingredient.quantity}
+                          {quantity}
                         </span>
                       </div>
                     );
@@ -282,19 +223,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
               </div>
 
               {/* 요리 팁 */}
-              <div className="bg-gradient-to-r from-[#FFFBEB] to-[#FEF3C7] border border-[#F59E0B]/20 rounded-xl p-4">
-                <h4 className="font-semibold text-[#92400E] mb-2 flex items-center gap-2">
-                  <span>💡</span>
-                  요리 팁
-                </h4>
-                <p className="text-[#92400E] text-sm">
-                  {recipe.difficulty <= 2
-                    ? "간단한 레시피예요! 천천히 따라하시면 완벽한 요리가 완성됩니다."
-                    : recipe.difficulty === 3
-                    ? "중간 난이도 레시피입니다. 각 단계를 차근차근 따라해보세요."
-                    : "고급 레시피입니다. 시간을 충분히 두고 정성스럽게 만들어보세요."}
-                </p>
-              </div>
+              <RecipeTip difficulty={recipe.difficulty} />
             </div>
           </div>
         </div>

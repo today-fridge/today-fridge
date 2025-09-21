@@ -74,47 +74,42 @@ export default function IngredientConsumptionModal({
         {/* 재료 리스트 */}
         <div className="p-6 max-h-[50vh] md:max-h-[400px] overflow-y-auto">
           <div className="space-y-4">
-            {recipe.ingredients.map((ingredient) => {
-              const originalQuantity = ingredient.quantity; // 이제 number
-              const currentQuantity = consumedQuantities[ingredient.name] || 0;
+            {recipe.ingredients.map(({ name, quantity }) => {
+              const originalQuantity = quantity; // 이제 number
+              const currentQuantity = consumedQuantities[name] || 0;
 
               return (
-                <div
-                  key={ingredient.name}
-                  className="bg-[#F9FAFB] rounded-xl p-4"
-                >
+                <div key={name} className="bg-[#F9FAFB] rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     {/* 재료 정보 */}
                     <div className="flex items-center gap-3">
                       <div className="text-2xl">
-                        {ingredient.name === "당근"
+                        {name === "당근"
                           ? "🥕"
-                          : ingredient.name === "양파"
+                          : name === "양파"
                           ? "🧅"
-                          : ingredient.name === "마늘"
+                          : name === "마늘"
                           ? "🧄"
-                          : ingredient.name === "계란"
+                          : name === "계란"
                           ? "🥚"
-                          : ingredient.name === "밥"
+                          : name === "밥"
                           ? "🍚"
-                          : ingredient.name === "대파"
+                          : name === "대파"
                           ? "🌿"
-                          : ingredient.name === "간장"
+                          : name === "간장"
                           ? "🍶"
-                          : ingredient.name === "우유"
+                          : name === "우유"
                           ? "🥛"
-                          : ingredient.name === "소금"
+                          : name === "소금"
                           ? "🧂"
-                          : ingredient.name === "식용유"
+                          : name === "식용유"
                           ? "🛢️"
                           : "🥄"}
                       </div>
                       <div>
-                        <div className="font-medium text-[#374151]">
-                          {ingredient.name}
-                        </div>
+                        <div className="font-medium text-[#374151]">{name}</div>
                         <div className="text-sm text-[#6B7280]">
-                          레시피: {ingredient.quantity}
+                          레시피: {quantity}
                         </div>
                       </div>
                     </div>
@@ -127,7 +122,7 @@ export default function IngredientConsumptionModal({
 
                       <div className="flex items-center gap-2 bg-white rounded-lg border border-[#E5E7EB] p-1">
                         <button
-                          onClick={() => adjustQuantity(ingredient.name, -0.5)}
+                          onClick={() => adjustQuantity(name, -0.5)}
                           disabled={currentQuantity <= 0}
                           className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[#F3F4F6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
@@ -141,7 +136,7 @@ export default function IngredientConsumptionModal({
                         </div>
 
                         <button
-                          onClick={() => adjustQuantity(ingredient.name, 0.5)}
+                          onClick={() => adjustQuantity(name, 0.5)}
                           className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-[#F3F4F6] transition-colors"
                         >
                           <Plus className="w-4 h-4 text-[#6B7280]" />

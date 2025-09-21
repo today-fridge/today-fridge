@@ -4,15 +4,16 @@ import { transformPrismaRecipe } from "@/lib/recipeTransform";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const recipeId = parseInt((await params).id);
+    const { id } = await params;
+    const recipeId = parseInt(id);
 
     if (isNaN(recipeId)) {
       return NextResponse.json(
         { error: "올바르지 않은 레시피 ID입니다." },
-        { status: 404 }
+        { status: 400 }
       );
     }
 

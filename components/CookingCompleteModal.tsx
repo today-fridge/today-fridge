@@ -77,13 +77,13 @@ export function CookingCompleteModal({
   };
 
   const handleCancel = () => {
-    onClose();
     // 원래 값으로 리셋
-    const quantity: { [key: string]: number } = {};
-    normalizedRecipeIngredients.forEach((ingredient) => {
-      quantity[ingredient.name] = ingredient.displayQuantity;
-    });
+    const quantity = normalizedRecipeIngredients.reduce((acc, ingredient) => {
+      acc[ingredient.name] = ingredient.displayQuantity;
+      return acc;
+    }, {} as { [key: string]: number });
     setIngredientQuantity(quantity);
+    onClose();
   };
 
   const FloatingParticles = () => (

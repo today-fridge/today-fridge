@@ -143,7 +143,7 @@ export default function AllRecipesClient() {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                ingredients={userIngredientList}
+                userIngredientList={userIngredientList}
                 layout="grid"
               />
             ))}
