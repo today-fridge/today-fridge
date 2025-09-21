@@ -1,6 +1,6 @@
 import { Clock, Star, XCircle, SquareUserRound } from "lucide-react";
 import Link from "next/link";
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { Recipe, IngredientForRecipe } from "@/types";
 import {
   calculateAvailabilityRatio,
   getAvailabilityBgColor,
@@ -8,10 +8,12 @@ import {
   getDifficultyText,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
+import { MAX_AVAILABILITY_RATIO } from "@/constants/recipe";
+import DifficultyStars from "./DifficultyStars";
 
 interface RecipeCardProps {
   recipe: Recipe;
-  ingredients: RecipeIngredientInfo[];
+  userIngredientList: IngredientForRecipe[];
   layout?: "grid" | "list";
   showRanking?: boolean;
   rankingIndex?: number;
@@ -19,7 +21,7 @@ interface RecipeCardProps {
 
 export default function RecipeCard({
   recipe,
-  ingredients: userIngredientList,
+  userIngredientList,
   layout = "grid",
   showRanking = false,
   rankingIndex = 0,
@@ -58,7 +60,7 @@ export default function RecipeCard({
           >
             보유율 {availabilityRatio}%
           </div>
-          {availabilityRatio === 100 && (
+          {MAX_AVAILABILITY_RATIO && (
             <div className="absolute top-3 left-3 bg-[#10B981] text-white px-2 py-1 rounded-full text-xs font-medium">
               ✨ 완벽
             </div>
@@ -85,18 +87,7 @@ export default function RecipeCard({
           {/* 기본 정보 */}
           <div className="flex items-center gap-4 mb-4 text-sm text-[#6B7280]">
             <div className="flex items-center gap-1">
-              <span className="flex items-center text-[#6B7280]">
-                {Array.from({ length: recipe.difficulty }, (_, index) => (
-                  <Star
-                    key={index}
-                    size={18}
-                    className="fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-                <span className="ml-2">
-                  {getDifficultyText(recipe.difficulty)}
-                </span>
-              </span>
+              <DifficultyStars difficulty={recipe.difficulty} />
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -201,18 +192,7 @@ export default function RecipeCard({
               {/* 기본 정보 */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 text-sm text-[#6B7280]">
                 <div className="flex items-center gap-1">
-                  <span className="flex items-center">
-                    {Array.from({ length: recipe.difficulty }, (_, index) => (
-                      <Star
-                        key={index}
-                        size={18}
-                        className="fill-yellow-400 text-yellow-400"
-                      />
-                    ))}
-                    <span className="ml-2">
-                      {getDifficultyText(recipe.difficulty)}
-                    </span>
-                  </span>
+                  <DifficultyStars difficulty={recipe.difficulty} />
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4 flex-shrink-0" />

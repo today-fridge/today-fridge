@@ -120,3 +120,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes loader-fill {
+    0% {
+      transform: scaleX(0);
+    }
+    100% {
+      transform: scaleX(1);
+    }
+  }
+
+  .animate-loader-fill {
+    animation: loader-fill 3s infinite;
+  }
+}

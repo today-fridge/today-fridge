@@ -44,7 +44,7 @@ export interface PrismaRecipe {
   RGTR_NM: string;
 }
 
-export interface RecipeIngredientInfo {
+export interface IngredientForRecipe {
   id: number;
   name: string;
   category: string;

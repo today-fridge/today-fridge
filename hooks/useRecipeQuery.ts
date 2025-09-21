@@ -3,28 +3,26 @@ import {
   getOneRecipe,
   getUserIngredients,
 } from "@/services/recipes";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export const useAllRecipes = () => {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["recipes"],
     queryFn: getAllRecipes,
-    initialData: [],
   });
 };
 
 export const useRecipe = (id: string) => {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["recipe", id],
     queryFn: () => getOneRecipe(id),
   });
 };
 
 export const useUserIngredcients = () => {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["userIngredcients"],
     queryFn: getUserIngredients,
-    initialData: { items: [] },
     select: ({ items }) => {
       return items.map((ingredient) => ({
         id: ingredient.id,

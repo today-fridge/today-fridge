@@ -1,4 +1,5 @@
-import { Recipe, RecipeIngredientInfo } from "@/types";
+import { Recipe, IngredientForRecipe } from "@/types";
+import { notFound } from "next/navigation";
 
 export const getAllRecipes = async (): Promise<Recipe[]> => {
   const response = await fetch(
@@ -12,13 +13,15 @@ export const getAllRecipes = async (): Promise<Recipe[]> => {
 export const getOneRecipe = async (id: string): Promise<Recipe> => {
   const response = await fetch(`/api/recipes/${id}`);
   if (!response.ok) {
-    throw new Error("해당 레시피를 찾을 수 없습니다.");
+    if (response.status === 404) {
+      notFound();
+    }
   }
   return await response.json();
 };
 
 export const getUserIngredients = async (): Promise<{
-  items: RecipeIngredientInfo[];
+  items: IngredientForRecipe[];
 }> => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/ingredients`
