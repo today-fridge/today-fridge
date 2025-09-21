@@ -4,7 +4,10 @@ import WebHeader from "@/components/WebHeader";
 import AppProvider from "@/components/AppProvider";
 
 export const metadata: Metadata = {
-  title: "나만의 냉장고 요리사",
+  title: "오늘의 냉장고",
+  icons:{
+    icon:"/favicon.png"
+  }
 };
 
 export default function RootLayout({
