@@ -1,7 +1,23 @@
+"use client";
+
 import { ChefHat, Refrigerator } from "lucide-react";
 import Image from "next/image";
+import { supabase } from "@/config/supabase";
 
 const Login = () => {
+  const handleOAuthLogin = async (provider: "kakao" | "google") => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/login/callback`,
+        },
+      });
+      if (error) console.error(`${provider} 로그인 에러:`, error);
+    } catch (error) {
+      console.error(`${provider} 로그인 실패:`, error);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-10 left-10 w-32 h-32 bg-green-200/30 rounded-full blur-xl"></div>
@@ -74,7 +90,7 @@ const Login = () => {
         <div className="space-y-4 w-full">
           {/* 구글 로그인 */}
           <button
-            formAction="/auth/google"
+            onClick={() => handleOAuthLogin("google")}
             className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 rounded-xl py-4 px-6 hover:border-gray-300 hover:shadow-md transition-all duration-200 group"
           >
             <Image
@@ -90,7 +106,7 @@ const Login = () => {
 
           {/* 카카오 로그인 */}
           <button
-            formAction="/auth/kakao"
+            onClick={() => handleOAuthLogin("kakao")}
             className="w-full flex items-center justify-center gap-3 bg-yellow-300 rounded-xl py-4 px-6 hover:bg-yellow-400 transition-all duration-200"
           >
             <Image
