@@ -1,117 +1,95 @@
 // app/page.tsx
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import FridgeScreen from "@/components/FridgeScreen";
 import AddIngredientModal from "@/components/AddIngredientModal";
-import { addIngredientToList } from "@/lib/ingredientList";
 import UpdateIngredientsModal from "@/components/UpdateIngredientModal";
 import type { Ingredient } from "@/types";
+import { 
+  useIngredients, 
+  useCreateIngredient, 
+  useUpdateIngredient, 
+  useDeleteIngredient 
+} from "@/hooks/useIngredientQuery";
 
 export default function HomePage() {
-  //  DB에서 불러온 재료 목록을 담는 상태
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  //  최초 로딩/에러 표시용
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
+  // useSuspenseQuery를 사용하는 훅 - 자동으로 Suspense 모드 활성화
+  const { data: ingredients } = useIngredients();
+  
+  // React Query mutations
+  const createIngredientMutation = useCreateIngredient();
+  const updateIngredientMutation = useUpdateIngredient();
+  const deleteIngredientMutation = useDeleteIngredient();
+  
   // 모달 가시성
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [editing, setEditing] = useState<Ingredient | null>(null);
-
-
   const addBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  const fetchIngredients = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setLoadError(null);
-      const res = await fetch("/api/ingredients", { cache: "no-store" });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j?.error || "재료 목록을 불러오지 못했어요.");
-      }
-      const data = await res.json();
-      setIngredients((data?.items ?? []) as Ingredient[]);
-    } catch (e: any) {
-      setLoadError(e.message || "알 수 없는 오류");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-
   const openUpdateModal = useCallback((ing: Ingredient) => {
-  setEditing(ing);
-  setShowUpdateModal(true);
-}, []);
+    setEditing(ing);
+    setShowUpdateModal(true);
+  }, []);
 
-const closeUpdateModal = useCallback(() => {
-  setShowUpdateModal(false);
-  setEditing(null);
-}, []);
+  const closeUpdateModal = useCallback(() => {
+    setShowUpdateModal(false);
+    setEditing(null);
+  }, []);
 
-const handleUpdated = useCallback((updated: Ingredient) => {
-    setIngredients((curr) =>
-      curr.map((it) => (it.id === updated.id ? updated : it))
+  const handleUpdated = useCallback((updated: Ingredient) => {
+    // React Query mutation 사용하여 서버 업데이트 + 캐시 무효화
+    updateIngredientMutation.mutate(
+      { id: updated.id, data: updated },
+      {
+        onSuccess: () => {
+          setShowUpdateModal(false);
+          setEditing(null);
+        },
+        onError: (error: any) => {
+          alert(error.message || "수정 중 오류가 발생했습니다.");
+        },
+      }
     );
-  }, []);
+  }, [updateIngredientMutation]);
 
-  // 삭제 반영
   const handleDeleted = useCallback((id: string) => {
-    setIngredients((curr) => curr.filter((it) => it.id !== id));
-  }, []);
-
-  // DB에서 목록 불러오기
-  useEffect(() => {
-    fetchIngredients();
-  }, [fetchIngredients]);
+    // React Query mutation 사용하여 서버에서 삭제 + 캐시 무효화
+    deleteIngredientMutation.mutate(id, {
+      onSuccess: () => {
+        setShowUpdateModal(false);
+        setEditing(null);
+      },
+      onError: (error: any) => {
+        alert(error.message || "삭제 중 오류가 발생했습니다.");
+      },
+    });
+  }, [deleteIngredientMutation]);
 
   const addIngredient = useCallback(
     (newIng: Omit<Ingredient, "id" | "daysLeft" | "available">) => {
-      setIngredients((curr) => addIngredientToList(curr, newIng));
-      setShowAddModal(false);
-      setTimeout(() => addBtnRef.current?.focus(), 0);
+      // React Query mutation 사용하여 서버에 추가 + 캐시 무효화
+      createIngredientMutation.mutate(newIng, {
+        onSuccess: () => {
+          setShowAddModal(false);
+          setTimeout(() => addBtnRef.current?.focus(), 0);
+        },
+        onError: (error: any) => {
+          alert(error.message || "추가 중 오류가 발생했습니다.");
+        },
+      });
     },
-    [/* fetchIngredients */]
+    [createIngredientMutation]
   );
 
-  const refresh = useCallback(() => {
-    fetchIngredients();
-  }, [fetchIngredients]);
-
-  if (isLoading) {
-    return (
-      <main className="container mx-auto p-6">
-        <div className="text-gray-600">불러오는 중…</div>
-      </main>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <main className="container mx-auto p-6">
-        <div className="text-red-600 mb-4">목록을 불러오지 못했어요: {loadError}</div>
-        <button
-          onClick={refresh}
-          className="rounded-lg px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700"
-        >
-          다시 시도
-        </button>
-      </main>
-    );
-  }
-
-  
-
-  // 화면 렌더링
+  // 화면 렌더링 (로딩 상태 체크 불필요)
   return (
     <>
       <FridgeScreen
         ingredients={ingredients}
         onAddIngredient={() => setShowAddModal(true)}
-        onEditIngredient={openUpdateModal} 
+        onEditIngredient={openUpdateModal}
       />
       <AddIngredientModal
         isOpen={showAddModal}
