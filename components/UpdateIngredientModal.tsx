@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, Save, Trash2, PencilLine } from "lucide-react";
 import type { Ingredient } from "@/types";
 import { CATEGORY_KO, emojiByKo } from "@/lib/ingredient";
@@ -11,7 +11,7 @@ type Props = {
   onClose: () => void;
   onUpdated?: (updated: Ingredient) => void;
   onDeleted?: (id: string) => void;
-  isUpdating?: boolean; // 외부에서 전달받는 로딩 상태
+  isUpdating?: boolean;
   isDeleting?: boolean;
 };
 
@@ -24,7 +24,7 @@ export default function UpdateIngredientsModal({
   isUpdating = false,
   isDeleting = false,
 }: Props) {
-  // useMemo 로 
+  // ✅ ingredient 기준으로 "초기 폼" 계산 (메모)
   const initialForm = useMemo(() => {
     if (!ingredient) {
       return {
@@ -36,7 +36,6 @@ export default function UpdateIngredientsModal({
         expiryDate: "",
       };
     }
-
     return {
       name: ingredient.name,
       category: ingredient.category as (typeof CATEGORY_KO)[number],
@@ -47,33 +46,36 @@ export default function UpdateIngredientsModal({
     };
   }, [ingredient]);
 
+  // ✅ 최초 마운트 시 initialForm으로 세팅
   const [form, setForm] = useState(initialForm);
 
-  // ingredient가 변경되면 form을 리셋 (렌더링 중에 동기적으로 처리)
-  if (ingredient && form.name !== ingredient.name) {
-    setForm(initialForm);
-  }
+  // ✅ ingredient(또는 initialForm)가 바뀌거나 모달이 "열릴 때"만 form을 리셋
+  useEffect(() => {
+    if (isOpen) {
+      setForm(initialForm);
+    }
+  }, [initialForm, isOpen]);
 
-  // 모달이 열려있지 않거나 ingredient가 없으면 렌더링하지 않음
+  // ❌ (삭제) 렌더 중 setState : 입력을 막던 주범
+  // if (ingredient && form.name !== ingredient.name) {
+  //   setForm(initialForm);
+  // }
+
   if (!isOpen || !ingredient) return null;
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // ESC 키 핸들링을 onKeyDown 이벤트로 처리
+  // ESC 키 (useEffect 없이 onKeyDown으로 처리 OK)
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose();
-    }
+    if (e.key === "Escape") onClose();
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ingredient) return;
     if (!form.name.trim()) {
       alert("재료명을 입력해주세요.");
       return;
     }
-
     const updatedIngredient: Ingredient = {
       ...ingredient,
       name: form.name.trim(),
@@ -83,21 +85,16 @@ export default function UpdateIngredientsModal({
       purchaseDate: form.purchaseDate || "",
       expiryDate: form.expiryDate || "",
     };
-
     onUpdated?.(updatedIngredient);
   };
 
   const handleDelete = () => {
-    if (!ingredient) return;
     if (!confirm("이 재료를 삭제할까요?")) return;
     onDeleted?.(ingredient.id);
   };
 
-  // 백드롭 클릭 처리
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
@@ -107,11 +104,11 @@ export default function UpdateIngredientsModal({
       aria-modal="true"
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
-      tabIndex={-1} // 키보드 이벤트를 받을 수 있도록
+      tabIndex={-1}
     >
       <div
         className="bg-white rounded-2xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // 모달 내부 클릭 시 닫히지 않도록
+        onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
@@ -149,7 +146,7 @@ export default function UpdateIngredientsModal({
               placeholder="예: 당근"
               required
               disabled={isUpdating || isDeleting}
-              autoFocus // 모달이 열릴 때 자동 포커스
+              autoFocus
             />
           </div>
 
@@ -194,7 +191,9 @@ export default function UpdateIngredientsModal({
                 onChange={(e) =>
                   setForm((s) => ({
                     ...s,
-                    quantity: parseFloat(e.target.value) || 1,
+                    quantity: Number.isNaN(parseFloat(e.target.value))
+                      ? s.quantity
+                      : parseFloat(e.target.value),
                   }))
                 }
                 disabled={isUpdating || isDeleting}
