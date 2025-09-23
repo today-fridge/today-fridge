@@ -4,6 +4,8 @@ import { X, Plus, Calendar, ReceiptText, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import type { Ingredient } from "@/types";
 import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
+import ReceiptScanner from "@/components/ReceiptScanner";
+import type { ExtractedItem } from "@/services/receipt"; 
 
 interface AddIngredientModalProps {
   isOpen: boolean;
@@ -13,7 +15,6 @@ interface AddIngredientModalProps {
   ) => void;
 }
 
-// 폼 상태 타입
 type FormData = {
   name: string;
   category: CategoryKo;
@@ -23,23 +24,16 @@ type FormData = {
   expiryDate: string;
 };
 
-// OCR 결과에서 추출된 상품 정보 (부모에 전달할 페이로드 형식)
-interface ExtractedItem {
-  name: string;
-  category: CategoryKo;
-  quantity: number;
-  unit: string;
-  purchaseDate: string; // yyyy-mm-dd
-  expiryDate?: string; // yyyy-mm-dd
-}
-
 export default function AddIngredientModal({
   isOpen,
   onClose,
   onAdd,
 }: AddIngredientModalProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [scanningReceipt, setScanningReceipt] = useState(false);
+
+  // ❌ 이제 ReceiptScanner가 관리하므로 불필요
+  // const [scanningReceipt, setScanningReceipt] = useState(false);
+
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [showExtractedItems, setShowExtractedItems] = useState(false);
 
@@ -51,6 +45,7 @@ export default function AddIngredientModal({
     purchaseDate: new Date().toISOString().split("T")[0],
     expiryDate: "",
   });
+
   const isOpenRef = useRef(isOpen);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -58,150 +53,18 @@ export default function AddIngredientModal({
     onCloseRef.current = onClose;
   });
 
+  // ESC 키
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") onClose();
   };
-  // 이미지를 Base64로 변환
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        const base64Data = base64.split(",")[1];
-        resolve(base64Data);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+
+  // ✅ ReceiptScanner에서 올라온 추출 결과 반영
+  const handleExtract = (items: ExtractedItem[]) => {
+    setExtractedItems(items);
+    setShowExtractedItems(true);
   };
 
-  // OCR 응답에서 items 배열 안전 추출
-  const extractItemsFromOcr = (ocrResult: any) => {
-    return (ocrResult?.images?.[0]?.receipt?.result?.subResults?.[0]?.items ??
-      null) as Array<{
-      name?: { text?: string };
-      count?: { text?: string };
-    }> | null;
-  };
-
-  // (개발용 테스트) /public/receipt.json 로컬파일로 OCR 시뮬레이션
-  const handleTest = async () => {
-    try {
-      const res = await fetch("/receipt.json");
-      const data = await res.json();
-      const rawItems = extractItemsFromOcr(data);
-
-      if (!rawItems) {
-        alert(
-          `텍스트를 인식할 수 없습니다.\n\n제안사항:\n- 더 선명한 이미지 사용\n- 밝은 조명\n- 영수증 전체 프레임 내 촬영\n- 구겨지지 않은 평평한 종이`
-        );
-        return;
-      }
-
-      const today = new Date().toISOString().split("T")[0];
-
-      const items: ExtractedItem[] = rawItems
-        .map((item) => ({
-          name: String(item?.name?.text ?? "").trim(),
-          category: "기타" as CategoryKo,
-          quantity: Number(item?.count?.text ?? 1),
-          unit: "개",
-          purchaseDate: today,
-          expiryDate: undefined,
-        }))
-        .filter((i) => i.name.length > 0 && Number.isFinite(i.quantity));
-
-      if (items.length > 0) {
-        setExtractedItems(items);
-        setShowExtractedItems(true);
-      } else {
-        alert("영수증에서 상품 정보를 찾을 수 없습니다.");
-      }
-    } catch (e) {
-      alert("테스트 데이터 로드 중 오류가 발생했습니다.");
-      console.error(e);
-    }
-  };
-
-  // 실제 영수증 스캔 → OCR API 호출
-  const handleReceiptScan = async (file: File) => {
-    try {
-      setScanningReceipt(true);
-
-      // 파일 검증
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("파일 크기가 너무 큽니다. (최대 5MB)");
-      }
-      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error("지원하지 않는 파일 형식입니다. (JPG, PNG만 가능)");
-      }
-
-      // Base64 변환
-      const base64Data = await convertToBase64(file);
-
-      // OCR API 호출
-      const ocrResponse = await fetch("/api/ocr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          version: "V2",
-          requestId: `receipt-${Date.now()}`,
-          timestamp: Date.now(),
-          images: [
-            {
-              format: file.type.split("/")[1],
-              name: "receipt-scan",
-              data: base64Data,
-            },
-          ],
-        }),
-      });
-
-      if (!ocrResponse.ok) {
-        const errorText = await ocrResponse.text();
-        console.error("OCR API 오류:", errorText);
-        throw new Error(`OCR 처리 실패 (${ocrResponse.status})`);
-      }
-
-      const ocrResult = await ocrResponse.json();
-
-      const rawItems = extractItemsFromOcr(ocrResult);
-      if (!rawItems) {
-        alert(
-          `텍스트를 인식할 수 없습니다.\n\n제안사항:\n- 더 선명한 이미지 사용\n- 밝은 조명\n- 영수증 전체 프레임 내 촬영\n- 구겨지지 않은 평평한 종이`
-        );
-        return;
-      }
-
-      const today = new Date().toISOString().split("T")[0];
-
-      const items: ExtractedItem[] = rawItems
-        .map((item) => ({
-          name: String(item?.name?.text ?? "").trim(),
-          category: "기타" as CategoryKo,
-          quantity: Number(item?.count?.text ?? 1),
-          unit: "개",
-          purchaseDate: today,
-          expiryDate: undefined,
-        }))
-        .filter((i) => i.name.length > 0 && Number.isFinite(i.quantity));
-
-      if (items.length > 0) {
-        setExtractedItems(items);
-        setShowExtractedItems(true);
-      } else {
-        alert("영수증에서 상품 정보를 찾을 수 없습니다.");
-      }
-    } catch (error: any) {
-      console.error("영수증 스캔 오류:", error);
-      alert(error.message || "영수증 스캔 중 오류가 발생했습니다.");
-    } finally {
-      setScanningReceipt(false);
-    }
-  };
-
-  // 개별 추가: 부모의 onAdd(payload)만 호출
+  // ✅ 누락되어 있던 개별 추가 핸들러
   const handleAddExtractedItem = (item: ExtractedItem, index: number) => {
     if (submitting) return;
     setSubmitting(true);
@@ -213,19 +76,19 @@ export default function AddIngredientModal({
         unit: item.unit,
         purchaseDate: item.purchaseDate,
         expiryDate: item.expiryDate,
+        // Ingredient 타입에 emoji가 없다면 any 캐스팅 유지
         emoji: emojiByKo[item.category],
-      } as any); // 부모가 mutate → invalidate
+      } as any);
 
-      // 목록에서 제거
       setExtractedItems((prev) => prev.filter((_, i) => i !== index));
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 모두 추가: 부모의 onAdd(payload)를 항목 수만큼 호출
+  // ✅ 누락되어 있던 모두 추가 핸들러
   const handleAddAllExtractedItems = async () => {
-    if (submitting) return;
+    if (submitting || extractedItems.length === 0) return;
     setSubmitting(true);
     try {
       for (let i = 0; i < extractedItems.length; i++) {
@@ -240,22 +103,19 @@ export default function AddIngredientModal({
           emoji: emojiByKo[item.category],
         } as any);
 
-        // API 보호를 위해 살짝 간격(옵션)
         if (i < extractedItems.length - 1) {
           await new Promise((r) => setTimeout(r, 80));
         }
       }
       setExtractedItems([]);
       setShowExtractedItems(false);
-      onClose(); // 부모가 invalidate → 리스트 갱신
+      onClose();
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
-
-  // 수동 추가: 부모의 onAdd(payload)만 호출
+  // 수동 추가
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || submitting) return;
@@ -272,7 +132,6 @@ export default function AddIngredientModal({
         emoji: emojiByKo[formData.category],
       } as any);
 
-      // 폼 초기화 + 닫기
       setFormData({
         name: "",
         category: "기타",
@@ -290,6 +149,8 @@ export default function AddIngredientModal({
   const today = new Date().toISOString().split("T")[0];
   const minExpiryDate = formData.purchaseDate || today;
 
+  if (!isOpen) return null;
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
@@ -297,6 +158,7 @@ export default function AddIngredientModal({
       aria-modal="true"
       aria-labelledby="add-ingredient-title"
       onKeyDown={handleKeyDown}
+      tabIndex={-1} // ✅ 포커스 받도록
     >
       <div className="bg-white rounded-2xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* 헤더 */}
@@ -327,45 +189,9 @@ export default function AddIngredientModal({
           </button>
         </div>
 
-        {/* 영수증 추가 */}
+        {/* 영수증 추가 (분리된 컴포넌트) */}
         <div className="p-6 space-y-4">
-          <button
-            onClick={handleTest}
-            className="text-sm underline text-[#6B7280]"
-          >
-            테스트 데이터로 채우기
-          </button>
-          <label
-            className={`w-full p-4 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer ${
-              scanningReceipt
-                ? "bg-gray-400 text-white cursor-not-allowed"
-                : "bg-[#10B981] text-white hover:bg-[#059669]"
-            }`}
-            htmlFor="scanReceipt"
-          >
-            {scanningReceipt ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                영수증 분석 중...
-              </>
-            ) : (
-              <>
-                <ReceiptText className="w-5 h-5" />
-                영수증으로 추가하기
-              </>
-            )}
-          </label>
-          <input
-            type="file"
-            id="scanReceipt"
-            accept="image/*"
-            className="hidden"
-            disabled={scanningReceipt}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleReceiptScan(file);
-            }}
-          />
+          <ReceiptScanner onExtract={handleExtract} />
         </div>
 
         {/* 추출된 상품 목록 */}
