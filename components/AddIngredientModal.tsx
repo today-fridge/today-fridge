@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import type { Ingredient } from "@/types";
 import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
 
-const OCR_DEV = process.env.NEXT_PUBLIC_OCR_DEV === "true";
-
 interface AddIngredientModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -62,7 +60,7 @@ export default function AddIngredientModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]); 
 
   // 이미지를 Base64로 변환하는 함수
   const convertToBase64 = (file: File): Promise<string> => {
@@ -80,7 +78,7 @@ export default function AddIngredientModal({
 
   // ocr 응답에서 텍스트 추출
   const extractTextFromOcrResult = (ocrResult: any) => {
-    const extractedText:[] | null =
+    const extractedText: [] | null =
       ocrResult?.images?.[0]?.receipt?.result?.subResults?.[0]?.items ?? null;
     return extractedText;
   };
@@ -99,7 +97,6 @@ export default function AddIngredientModal({
       );
       return;
     }
-
 
     // // ExtractedItem 형태로 변환 (DB 저장용)
     const items: ExtractedItem[] = extractedText.map((item) => ({
@@ -124,13 +121,6 @@ export default function AddIngredientModal({
 
   const handleReceiptScan = async (file: File) => {
     try {
-      console.log("=== 영수증 스캔 시작 ===");
-      console.log("파일 정보:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      });
-
       setScanningReceipt(true);
 
       // 파일 검증
@@ -145,7 +135,6 @@ export default function AddIngredientModal({
 
       // Base64 변환
       const base64Data = await convertToBase64(file);
-      console.log("Base64 변환 완료, 길이:", base64Data.length);
 
       // OCR API 호출
       const ocrResponse = await fetch("/api/ocr", {
@@ -251,8 +240,6 @@ export default function AddIngredientModal({
     }
 
     const created = await res.json();
-    // console.log("DB 저장 성공:", created);
-    // console.log("=== DB 저장 완료 ===");
 
     return created;
   };
@@ -260,9 +247,6 @@ export default function AddIngredientModal({
   // 개별 상품 추가
   const handleAddExtractedItem = async (item: ExtractedItem, index: number) => {
     try {
-      console.log(`=== 개별 상품 추가 시작 [${index}] ===`);
-      console.log("추가할 상품:", item);
-
       const created = await saveExtractedItemToDB(item);
 
       onAdd({
