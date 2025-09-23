@@ -19,12 +19,6 @@ export const ingredientQueryKey = (id: string) => ["ingredient", id];
 
 // 재료 전체 조회
 export const useIngredients = () => {
-  console.log("🔍 useIngredients 훅 호출됨", {
-    timestamp: new Date().toISOString(),
-    // 호출 위치 추적
-    stack: new Error().stack?.split("\n").slice(1, 4).join("\n"),
-  });
-
   return useSuspenseQuery({
     queryKey: INGREDIENTS_QUERY_KEY,
     queryFn: () => {
@@ -34,10 +28,6 @@ export const useIngredients = () => {
       return getAllIngredients();
     },
     select: (data) => {
-      console.log("📦 select 함수 실행:", {
-        count: data?.items?.length,
-        timestamp: new Date().toISOString(),
-      });
       return data?.items ?? [];
     },
     // 디버깅용 추가 옵션

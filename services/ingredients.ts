@@ -1,33 +1,9 @@
 // services/ingredients.ts
 import { Ingredient } from "@/types";
 
-// export const getAllIngredients = async (): Promise<{
-//   items: Ingredient[];
-// }> => {
-//   const response = await fetch(
-//     `${process.env.NEXT_PUBLIC_BASE_URL}/api/ingredients`,
-//     // { cache: "no-store" }
-//   );
-
-//   if (!response.ok) {
-//     const errorData = await response.json().catch(() => ({}));
-//     throw new Error(errorData?.error || "재료 목록을 불러오지 못했습니다.");
-//   }
-
-//   return response.json();
-// };
-
-// services/ingredients.ts
-let callCount = 0;
-
 export const getAllIngredients = async (): Promise<{
   items: Ingredient[];
 }> => {
-  callCount++;
-  console.log(`🚀 getAllIngredients 호출 #${callCount}`, {
-    timestamp: new Date().toISOString(),
-    callCount,
-  });
 
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL}/api/ingredients`

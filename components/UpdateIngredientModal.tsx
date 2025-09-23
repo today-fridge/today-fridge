@@ -46,26 +46,20 @@ export default function UpdateIngredientsModal({
     };
   }, [ingredient]);
 
-  // ✅ 최초 마운트 시 initialForm으로 세팅
   const [form, setForm] = useState(initialForm);
 
-  // ✅ ingredient(또는 initialForm)가 바뀌거나 모달이 "열릴 때"만 form을 리셋
+  // 기존 정보 불러오기
   useEffect(() => {
     if (isOpen) {
       setForm(initialForm);
     }
   }, [initialForm, isOpen]);
 
-  // ❌ (삭제) 렌더 중 setState : 입력을 막던 주범
-  // if (ingredient && form.name !== ingredient.name) {
-  //   setForm(initialForm);
-  // }
-
   if (!isOpen || !ingredient) return null;
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // ESC 키 (useEffect 없이 onKeyDown으로 처리 OK)
+  // ESC 키
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") onClose();
   };

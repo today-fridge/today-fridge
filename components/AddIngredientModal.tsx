@@ -8,7 +8,6 @@ import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
 interface AddIngredientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // ✅ 부모에 “추가 요청”만 위임 (부모가 React Query mutate + invalidate)
   onAdd: (
     ingredient: Omit<Ingredient, "id" | "daysLeft" | "available">
   ) => void;
@@ -43,7 +42,6 @@ export default function AddIngredientModal({
   const [scanningReceipt, setScanningReceipt] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [showExtractedItems, setShowExtractedItems] = useState(false);
-  const [ocrDebugInfo, setOcrDebugInfo] = useState<any>(null); // 필요시 UI에 노출
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -58,19 +56,11 @@ export default function AddIngredientModal({
   useEffect(() => {
     isOpenRef.current = isOpen;
     onCloseRef.current = onClose;
-  }); // ✅ deps 없음(길이 0으로 고정 아님? → 빈배열 미지정 = 매 렌더 동기화)
+  });
 
-  // ESC 리스너는 한 번만 등록 (deps 길이 = 0 고정)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpenRef.current) {
-        onCloseRef.current?.();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") onClose();
+  };
   // 이미지를 Base64로 변환
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -133,7 +123,7 @@ export default function AddIngredientModal({
     }
   };
 
-  // 실제 영수증 스캔 → OCR API 호출 (서버는 /api/ocr로 프록시한다고 가정)
+  // 실제 영수증 스캔 → OCR API 호출
   const handleReceiptScan = async (file: File) => {
     try {
       setScanningReceipt(true);
@@ -175,7 +165,6 @@ export default function AddIngredientModal({
       }
 
       const ocrResult = await ocrResponse.json();
-      setOcrDebugInfo(ocrResult);
 
       const rawItems = extractItemsFromOcr(ocrResult);
       if (!rawItems) {
@@ -212,7 +201,6 @@ export default function AddIngredientModal({
     }
   };
 
-  // ✅ 모달 내부에서는 서버에 직접 POST하지 않는다!
   // 개별 추가: 부모의 onAdd(payload)만 호출
   const handleAddExtractedItem = (item: ExtractedItem, index: number) => {
     if (submitting) return;
@@ -308,6 +296,7 @@ export default function AddIngredientModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-ingredient-title"
+      onKeyDown={handleKeyDown}
     >
       <div className="bg-white rounded-2xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* 헤더 */}
@@ -466,6 +455,7 @@ export default function AddIngredientModal({
               placeholder="예: 당근, 우유, 계란"
               className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200 text-lg"
               required
+              autoFocus
             />
           </div>
 
