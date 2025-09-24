@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
+import NavLoginButton from "./NavLoginButton";
 
 export default function WebHeader() {
   const pathname = usePathname();
@@ -69,13 +70,7 @@ export default function WebHeader() {
                 <Bell className="w-5 h-5 text-[#6B7280]" />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#EF4444] rounded-full" />
               </button> */}
-              <Link
-                href="/login"
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
-              >
-                <User className="w-5 h-5 text-[#6B7280]" />
-                <span className="text-sm text-[#374151]">로그인</span>
-              </Link>
+              <NavLoginButton />
             </div>
           </div>
         </div>
@@ -95,20 +90,14 @@ export default function WebHeader() {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#EF4444] rounded-full" />
             </button> */}
 
-            {/* 모바일 로그인 버튼 */}
-            <Link
-              href="/login"
-              className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors relative"
-            >
-              <User className="w-5 h-5 text-[#6B7280]" />
-            </Link>
+            <NavLoginButton />
           </div>
         </div>
       </header>
 
       {/* 모바일 하단 네비게이션 */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] z-50 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-2 px-2 py-1">
+        <div className="grid grid-cols-3 px-2 py-1">
           {nav.map((n) => (
             <Link
               key={n.href}
