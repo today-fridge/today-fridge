@@ -44,7 +44,7 @@ export async function PATCH(
       where: { id },
       data: {
         name: String(body.name).trim(),
-        category: catEnum as any, // Prisma enum
+        category: catEnum , 
         quantity:
           typeof body.quantity === "number"
             ? body.quantity
@@ -71,10 +71,10 @@ export async function PATCH(
     };
 
     return NextResponse.json(uiItem, { status: 200 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[PATCH /api/ingredients/:id]", err);
     return NextResponse.json(
-      { error: err?.message ?? "수정 실패" },
+      { error: err instanceof Error ? err.message : "수정 실패" },
       { status: 500 }
     );
   }
@@ -89,10 +89,10 @@ export async function DELETE(
     const id = parseId(params.id);
     await prisma.ingredient.delete({ where: { id } });
     return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[DELETE /api/ingredients/:id]", err);
     return NextResponse.json(
-      { error: err?.message ?? "삭제 실패" },
+      { error: err instanceof Error? err.message : "삭제 실패" },
       { status: 500 }
     );
   }

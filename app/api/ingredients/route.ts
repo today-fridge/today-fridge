@@ -1,13 +1,8 @@
 // app/api/ingredients/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  enumToKo,
-  koToEnum,
-  emojiByKo,
-} from "@/lib/ingredient";
+import { enumToKo, koToEnum, emojiByKo } from "@/lib/ingredient";
 import { ymd, calcDaysLeft } from "@/utils/date";
-
 
 export async function GET() {
   try {
@@ -60,7 +55,7 @@ export async function POST(req: Request) {
     const created = await prisma.ingredient.create({
       data: {
         name: body.name.trim(),
-        category: catEnum as any,
+        category: catEnum,
         quantity: Number(body.quantity),
         unit: body.unit.trim(),
         purchasedAt,

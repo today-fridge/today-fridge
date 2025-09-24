@@ -19,33 +19,28 @@ export default function FridgeScreen({
 }: FridgeScreenProps) {
   const [activeCategory, setActiveCategory] = useState("전체");
   const [searchText, setSearchText] = useState("");
-  const [sortBy, setSortBy] = useState<"expiry" | "name" | "category">(
-    "expiry"
-  );
+  const [sortBy, setSortBy] = useState<"expiry" | "name" | "category">("expiry");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expiryFilter, setExpiryFilter] = useState<ExpiryFilter>("all");
 
-  const categories = [
-    "전체",
-    "야채",
-    "고기",
-    "유제품",
-    "조미료",
-    "기타",
-  ] as const;
+  const categories = ["전체", "야채", "고기", "유제품", "조미료", "기타"] as const;
 
-  const getExpiryStatus = (daysLeft: number) => {
+  const getExpiryStatus = (daysLeft: number | null | undefined) => {
+    if (daysLeft == null) return "safe"; // null 또는 undefined인 경우 기본값
     if (daysLeft <= 3) return "urgent";
     if (daysLeft <= 7) return "warning";
     return "safe";
   };
 
-  const formatExpiryDate = (daysLeft: number ,expiryDate?: string ) => {
+  const formatExpiryDate = (daysLeft: number | null | undefined, expiryDate?: string) => {
     if (expiryDate) {
       const date = new Date(expiryDate);
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       const shortDate = `${month}.${day}`;
+      
+      if (daysLeft == null) return `미설정 (${shortDate})`;
+      
       return daysLeft < 0
         ? "기한만료"
         : daysLeft === 0
@@ -54,6 +49,17 @@ export default function FridgeScreen({
     } else {
       return `미설정`;
     }
+  };
+
+  //유통기한 미설정 시, 색상 변경
+  const getExpiryChipClass = (daysLeft: number | null | undefined, expiryDate?: string) => {
+    if (!expiryDate || daysLeft == null) {
+      return "bg-[#F3F4F6] text-[#6B7280]";
+    }
+    const status = getExpiryStatus(daysLeft);
+    if (status === "urgent") return "bg-[#FEF2F2] text-[#EF4444]";
+    if (status === "warning") return "bg-[#FFFBEB] text-[#F59E0B]";
+    return "bg-[#F0FDF4] text-[#10B981]";
   };
 
   const filteredIngredients = ingredients
@@ -73,6 +79,10 @@ export default function FridgeScreen({
     .sort((a, b) => {
       switch (sortBy) {
         case "expiry":
+          // null/undefined는 가장 뒤로 정렬
+          if (a.daysLeft == null && b.daysLeft == null) return 0;
+          if (a.daysLeft == null) return 1;
+          if (b.daysLeft == null) return -1;
           return a.daysLeft - b.daysLeft;
         case "name":
           return a.name.localeCompare(b.name);
@@ -81,36 +91,15 @@ export default function FridgeScreen({
       }
     });
 
-  const urgentCount = ingredients.filter(
-    (i) => getExpiryStatus(i.daysLeft) === "urgent"
-  ).length;
-  const warningCount = ingredients.filter(
-    (i) => getExpiryStatus(i.daysLeft) === "warning"
-  ).length;
-  const safeCount = ingredients.filter(
-    (i) => getExpiryStatus(i.daysLeft) === "safe"
-  ).length;
+  const urgentCount = ingredients.filter((i) => getExpiryStatus(i.daysLeft) === "urgent").length;
+  const warningCount = ingredients.filter((i) => getExpiryStatus(i.daysLeft) === "warning").length;
+  const safeCount = ingredients.filter((i) => getExpiryStatus(i.daysLeft) === "safe").length;
 
   const expiryFilters = [
-    {
-      key: "all" as const,
-      label: "전체",
-      count: ingredients.length,
-      color: "#6B7280",
-    },
+    { key: "all" as const, label: "전체", count: ingredients.length, color: "#6B7280" },
     { key: "safe" as const, label: "안전", count: safeCount, color: "#10B981" },
-    {
-      key: "warning" as const,
-      label: "주의",
-      count: warningCount,
-      color: "#F59E0B",
-    },
-    {
-      key: "urgent" as const,
-      label: "임박",
-      count: urgentCount,
-      color: "#EF4444",
-    },
+    { key: "warning" as const, label: "주의", count: warningCount, color: "#F59E0B" },
+    { key: "urgent" as const, label: "임박", count: urgentCount, color: "#EF4444" },
   ];
 
   return (
@@ -123,50 +112,33 @@ export default function FridgeScreen({
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151] mb-2">
                 내 냉장고 관리 🧊
               </h1>
-              <p className="text-[#6B7280]">
-                신선한 재료를 체계적으로 관리하세요
-              </p>
+              <p className="text-[#6B7280]">신선한 재료를 체계적으로 관리하세요</p>
             </div>
-            <button
-              onClick={onAddIngredient}
-              className="bg-[#10B981] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              재료 추가
-            </button>
           </div>
 
           {/* 상태 요약 카드 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#EF4444] mb-1">
-                  임박 {urgentCount}개
-                </div>
+                <div className="text-2xl font-bold text-[#EF4444] mb-1">임박 {urgentCount}개</div>
                 <div className="text-sm text-[#6B7280]">3일 이내 만료</div>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#F59E0B] mb-1">
-                  주의 {warningCount}개
-                </div>
+                <div className="text-2xl font-bold text-[#F59E0B] mb-1">주의 {warningCount}개</div>
                 <div className="text-sm text-[#6B7280]">4-7일 내 만료</div>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#10B981] mb-1">
-                  안전 {safeCount}개
-                </div>
+                <div className="text-2xl font-bold text-[#10B981] mb-1">안전 {safeCount}개</div>
                 <div className="text-sm text-[#6B7280]">7일 이상 남음</div>
               </div>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB]">
               <div className="text-center">
-                <div className="text-2xl font-bold text-[#374151] mb-1">
-                  전체 {ingredients.length}개
-                </div>
+                <div className="text-2xl font-bold text-[#374151] mb-1">전체 {ingredients.length}개</div>
                 <div className="text-sm text-[#6B7280]">보유 재료</div>
               </div>
             </div>
@@ -187,9 +159,7 @@ export default function FridgeScreen({
           </div>
 
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-[#374151] mb-3">
-              유통기한 상태
-            </h3>
+            <h3 className="text-sm font-semibold text-[#374151] mb-3">유통기한 상태</h3>
             <div className="flex gap-2 overflow-x-auto pb-2">
               {expiryFilters.map((filter) => (
                 <button
@@ -201,12 +171,8 @@ export default function FridgeScreen({
                       : "border-[#E5E7EB] text-[#6B7280] hover:border-current hover:text-current"
                   }`}
                   style={{
-                    backgroundColor:
-                      expiryFilter === filter.key
-                        ? filter.color
-                        : "transparent",
-                    borderColor:
-                      expiryFilter === filter.key ? filter.color : "#E5E7EB",
+                    backgroundColor: expiryFilter === filter.key ? filter.color : "transparent",
+                    borderColor: expiryFilter === filter.key ? filter.color : "#E5E7EB",
                     color: expiryFilter === filter.key ? "white" : filter.color,
                   }}
                 >
@@ -218,9 +184,7 @@ export default function FridgeScreen({
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-[#374151] mb-3">
-                카테고리
-              </h3>
+              <h3 className="text-sm font-semibold text-[#374151] mb-3">카테고리</h3>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {categories.map((category) => (
                   <button
@@ -245,9 +209,7 @@ export default function FridgeScreen({
             <div className="flex items-center gap-3">
               <select
                 value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as "expiry" | "name" | "category")
-                }
+                onChange={(e) => setSortBy(e.target.value as "expiry" | "name" | "category")}
                 className="px-3 py-2 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] text-sm focus:outline-none focus:border-[#10B981] transition-colors"
               >
                 <option value="expiry">유통기한순</option>
@@ -255,13 +217,12 @@ export default function FridgeScreen({
                 <option value="category">카테고리순</option>
               </select>
 
-              <div className="flex bg-[#F9FAFB] rounded-lg p-1">
+              {/* 보기 전환 토글 */}
+              <div className="hidden md:flex bg-[#F9FAFB] rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "grid"
-                      ? "bg-white text-[#10B981] shadow-sm"
-                      : "text-[#6B7280] hover:text-[#374151]"
+                    viewMode === "grid" ? "bg-white text-[#10B981] shadow-sm" : "text-[#6B7280] hover:text-[#374151]"
                   }`}
                 >
                   <Grid3X3 className="w-4 h-4" />
@@ -269,9 +230,7 @@ export default function FridgeScreen({
                 <button
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "list"
-                      ? "bg-white text-[#10B981] shadow-sm"
-                      : "text-[#6B7280] hover:text-[#374151]"
+                    viewMode === "list" ? "bg-white text-[#10B981] shadow-sm" : "text-[#6B7280] hover:text-[#374151]"
                   }`}
                 >
                   <List className="w-4 h-4" />
@@ -281,127 +240,116 @@ export default function FridgeScreen({
           </div>
         </div>
 
-        {/* 재료 목록 */}
+        {/* 뷰모드: 그리드 */}
         <div
-          className={`${
-            viewMode === "grid"
-              ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "space-y-3"
-          }`}
+          className={`
+            grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4
+            ${viewMode === "list" ? "md:hidden" : "md:grid"}
+          `}
         >
           {filteredIngredients.length > 0 ? (
-            filteredIngredients.map((ingredient) => {
-              const status = getExpiryStatus(ingredient.daysLeft);
-
-              if (viewMode === "grid") {
-                return (
-                  <div
-                    key={ingredient.id}
-                    onClick={() => onEditIngredient?.(ingredient)}
-                    className="bg-white rounded-xl p-5 shadow-sm border border-[#E5E7EB] hover:shadow-md hover:border-[#10B981]/20 transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="text-3xl">{ingredient.emoji}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-[#374151] truncate">
-                            {ingredient.name}
-                          </h3>
-                          <span className="text-sm text-[#6B7280] bg-[#F9FAFB] px-2 py-1 rounded-md">
-                            {ingredient.quantity}
-                            {ingredient.unit}
-                          </span>
-                        </div>
-                        <div
-                          className={`text-xs mb-2 px-2 py-1 rounded-md inline-block ${
-                            ingredient.category === "기타"
-                              ? "bg-[#F3F4F6] text-[#6B7280]"
-                              : "bg-[#F0FDF4] text-[#047857]"
-                          }`}
-                        >
-                          {ingredient.category}
-                        </div>
-                        <div
-                          className={`text-sm font-medium px-3 py-1 rounded-full text-center ${
-                            status === "urgent"
-                              ? "bg-[#FEF2F2] text-[#EF4444]"
-                              : status === "warning"
-                              ? "bg-[#FFFBEB] text-[#F59E0B]"
-                              : "bg-[#F0FDF4] text-[#10B981]"
-                          }`}
-                        >
-                          {formatExpiryDate(
-                            ingredient.daysLeft,
-                            ingredient.expiryDate,
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  key={ingredient.id}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB] hover:shadow-md hover:border-[#10B981]/20 transition-all duration-200"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl">{ingredient.emoji}</div>
-                    <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
-                      <div>
-                        <div className="font-semibold text-[#374151]">
-                          {ingredient.name}
-                        </div>
-                        <div
-                          className={`text-xs px-2 py-1 rounded-md inline-block mt-1 ${
-                            ingredient.category === "기타"
-                              ? "bg-[#F3F4F6] text-[#6B7280]"
-                              : "bg-[#F0FDF4] text-[#047857]"
-                          }`}
-                        >
-                          {ingredient.category}
-                        </div>
-                      </div>
-                      <div className="text-sm text-[#6B7280]">
+            filteredIngredients.map((ingredient) => (
+              <div
+                key={ingredient.id}
+                onClick={() => onEditIngredient?.(ingredient)}
+                className="bg-white rounded-xl p-5 shadow-sm border border-[#E5E7EB] hover:shadow-md hover:border-[#10B981]/20 transition-all duration-200"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-3xl">{ingredient.emoji}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-[#374151] truncate">{ingredient.name}</h3>
+                      <span className="text-sm text-[#6B7280] bg-[#F9FAFB] px-2 py-1 rounded-md">
                         {ingredient.quantity}
                         {ingredient.unit}
-                      </div>
-                      <div className="text-sm text-[#6B7280]">
-                        {ingredient.purchaseDate}
-                      </div>
-                      <div className="text-sm text-[#6B7280]">
-                        {ingredient.expiryDate}
-                      </div>
-                      <div
-                        className={`text-sm font-medium px-3 py-1 rounded-full text-center ${
-                          status === "urgent"
-                            ? "bg-[#FEF2F2] text-[#EF4444]"
-                            : status === "warning"
-                            ? "bg-[#FFFBEB] text-[#F59E0B]"
-                            : "bg-[#F0FDF4] text-[#10B981]"
-                        }`}
-                      >
-                        {formatExpiryDate(
-                          ingredient.daysLeft,
-                          ingredient.expiryDate
-                        )}
-                      </div>
+                      </span>
+                    </div>
+                    <div
+                      className={`text-xs mb-2 px-2 py-1 rounded-md inline-block ${
+                        ingredient.category === "기타"
+                          ? "bg-[#F3F4F6] text-[#6B7280]"
+                          : "bg-[#F0FDF4] text-[#047857]"
+                      }`}
+                    >
+                      {ingredient.category}
+                    </div>
+                    <div
+                      className={`text-sm font-medium px-3 py-1 rounded-full text-center ${getExpiryChipClass(
+                        ingredient.daysLeft,
+                        ingredient.expiryDate
+                      )}`}
+                    >
+                      {formatExpiryDate(ingredient.daysLeft, ingredient.expiryDate)}
                     </div>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           ) : (
             <div className="col-span-full text-center py-12">
               <div className="text-6xl mb-4">🥺</div>
-              <h3 className="text-lg font-semibold text-[#374151] mb-2">
-                재료가 없어요
-              </h3>
+              <h3 className="text-lg font-semibold text-[#374151] mb-2">재료가 없어요</h3>
               <p className="text-[#6B7280] mb-6">
-                {searchText ||
-                activeCategory !== "전체" ||
-                expiryFilter !== "all"
+                {searchText || activeCategory !== "전체" || expiryFilter !== "all"
+                  ? "검색 조건에 맞는 재료가 없습니다."
+                  : "냉장고에 첫 번째 재료를 추가해보세요!"}
+              </p>
+              <button
+                onClick={onAddIngredient}
+                className="bg-[#10B981] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#059669] transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                재료 추가하기
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className={`${viewMode === "list" ? "md:block" : "md:hidden"} hidden`}>
+          {filteredIngredients.length > 0 ? (
+            filteredIngredients.map((ingredient) => (
+              <div
+                key={ingredient.id}
+                className="bg-white rounded-xl p-4 shadow-sm border border-[#E5E7EB] hover:shadow-md hover:border-[#10B981]/20 transition-all duration-200 mb-3"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-2xl">{ingredient.emoji}</div>
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
+                    <div>
+                      <div className="font-semibold text-[#374151]">{ingredient.name}</div>
+                      <div
+                        className={`text-xs px-2 py-1 rounded-md inline-block mt-1 ${
+                          ingredient.category === "기타"
+                            ? "bg-[#F3F4F6] text-[#6B7280]"
+                            : "bg-[#F0FDF4] text-[#047857]"
+                        }`}
+                      >
+                        {ingredient.category}
+                      </div>
+                    </div>
+                    <div className="text-sm text-[#6B7280]">
+                      {ingredient.quantity}
+                      {ingredient.unit}
+                    </div>
+                    <div className="text-sm text-[#6B7280]">{ingredient.purchaseDate}</div>
+                    <div className="text-sm text-[#6B7280]">{ingredient.expiryDate}</div>
+                    <div
+                      className={`text-sm font-medium px-3 py-1 rounded-full text-center ${getExpiryChipClass(
+                        ingredient.daysLeft,
+                        ingredient.expiryDate
+                      )}`}
+                    >
+                      {formatExpiryDate(ingredient.daysLeft, ingredient.expiryDate)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🥺</div>
+              <h3 className="text-lg font-semibold text-[#374151] mb-2">재료가 없어요</h3>
+              <p className="text-[#6B7280] mb-6">
+                {searchText || activeCategory !== "전체" || expiryFilter !== "all"
                   ? "검색 조건에 맞는 재료가 없습니다."
                   : "냉장고에 첫 번째 재료를 추가해보세요!"}
               </p>

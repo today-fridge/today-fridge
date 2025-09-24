@@ -6,10 +6,11 @@ export interface Ingredient {
   unit: string;
   purchaseDate: string;
   expiryDate?: string;
-  daysLeft: number;
+  daysLeft?: number|null;
   emoji: string;
   available: boolean;
 }
+
 
 export interface Recipe {
   id: number;
