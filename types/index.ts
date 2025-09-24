@@ -11,6 +11,7 @@ export interface Ingredient {
   available: boolean;
 }
 
+
 export interface Recipe {
   id: number;
   name: string;
