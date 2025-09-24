@@ -6,11 +6,10 @@ export interface Ingredient {
   unit: string;
   purchaseDate: string;
   expiryDate?: string;
-  daysLeft?: number|null;
+  daysLeft?: number | null;
   emoji: string;
   available: boolean;
 }
-
 
 export interface Recipe {
   id: number;
@@ -56,4 +55,25 @@ export interface IngredientForRecipe {
   daysLeft?: number | null;
   emoji?: string;
   available: boolean;
+}
+
+export enum IngredientCategory {
+  VEGETABLE = "VEGETABLE",
+  MEAT = "MEAT",
+  DAIRY = "DAIRY",
+  SEASONING = "SEASONING",
+  OTHER = "OTHER",
+}
+
+export interface PrismaIngredient {
+  id: number;
+  name: string;
+  createdAt: Date;
+  category: IngredientCategory;
+
+  quantity: number;
+  unit: string;
+  purchasedAt: Date | null;
+  expiresAt: Date | null;
+  updatedAt: Date;
 }

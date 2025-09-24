@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { enumToKo, koToEnum, emojiByKo } from "@/lib/ingredient";
 import { ymd, calcDaysLeft } from "@/utils/date";
+import { PrismaIngredient } from "@/types";
 
 export async function GET() {
   try {
-    const rows = await prisma.ingredient.findMany({
+    const rows = (await prisma.ingredient.findMany({
       orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
-    });
+    })) as PrismaIngredient[];
     const today = new Date();
 
     const items = rows.map((r) => {
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
     const purchasedAt = body.purchaseDate ? new Date(body.purchaseDate) : null;
     const expiresAt = body.expiryDate ? new Date(body.expiryDate) : null;
 
-    const created = await prisma.ingredient.create({
+    const created = (await prisma.ingredient.create({
       data: {
         name: body.name.trim(),
         category: catEnum,
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
         purchasedAt,
         expiresAt,
       },
-    });
+    })) as PrismaIngredient;
 
     const catKo = enumToKo[created.category] ?? "기타";
     const today = new Date();
