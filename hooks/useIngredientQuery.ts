@@ -22,9 +22,6 @@ export const useIngredients = () => {
   return useSuspenseQuery({
     queryKey: INGREDIENTS_QUERY_KEY,
     queryFn: () => {
-      console.log("🌐 queryFn 실행 - API 호출 시작", {
-        timestamp: new Date().toISOString(),
-      });
       return getAllIngredients();
     },
     select: (data) => {
