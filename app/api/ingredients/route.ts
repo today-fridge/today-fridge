@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { enumToKo, koToEnum, emojiByKo } from "@/lib/ingredient";
 import { ymd, calcDaysLeft } from "@/utils/date";
+import { PrismaIngredient } from "@/types";
 
 export async function GET() {
   try {
-    const rows = await prisma.ingredient.findMany({
+    const rows = (await prisma.ingredient.findMany({
       orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
-    });
+    })) as PrismaIngredient[];
     const today = new Date();
 
     const items = rows.map((r) => {
