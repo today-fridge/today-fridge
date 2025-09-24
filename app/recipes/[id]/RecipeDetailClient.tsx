@@ -19,11 +19,13 @@ import { RecipeIngredient } from "@/types";
 import RecipeDetailHeader from "./RecipeDetailHeader";
 import InventoryStatus from "./InventoryStatus";
 import RecipeTip from "./RecipeTip";
+import { useRouter } from "next/navigation";
 
 export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
   // TODO: 시간 나면 "좋아요" 기능 추가 예정
   // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const { data: recipe } = useRecipe(recipeId);
   const { data: userIngredientList } = useUserIngredcients();
@@ -53,7 +55,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
   });
 
   const handleBackClick = () => {
-    window.history.back();
+    router.back();
   };
 
   return (
