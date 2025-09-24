@@ -1,30 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import RecipeCard from "@/components/RecipeCard";
-import {
-  calculateAvailabilityRatio,
-  getMissingIngredients,
-  sortRecipesByAvailability,
-} from "@/lib/recipeTransform";
-import { useAllRecipes, useUserIngredcients } from "@/hooks/useRecipeQuery";
+import dynamic from "next/dynamic";
+
+const RecommendedRecipeClient = dynamic(
+  () => import("./RecommendedRecipeClient"),
+  {
+    ssr: false,
+  }
+);
 
 export default function RecipeRecommendation() {
-  const { data: recipes } = useAllRecipes();
-  const { data: userIngredientList } = useUserIngredcients();
-
-  // 보유율 높은 순으로 정렬하여 상위 3개만
-  const recommendedRecipes = sortRecipesByAvailability(
-    recipes,
-    userIngredientList
-  )
-    .map((recipe) => ({
-      ...recipe,
-      availability: calculateAvailabilityRatio({ recipe, userIngredientList }),
-      missingIngredients: getMissingIngredients({ recipe, userIngredientList }),
-    }))
-    .slice(0, 3);
-
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20 md:pb-0">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -39,21 +25,7 @@ export default function RecipeRecommendation() {
         </div>
 
         {/* 추천 레시피 카드들 */}
-
-        <div className="space-y-6 mb-12">
-          {recommendedRecipes.map((recipe, index) => {
-            return (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                userIngredientList={userIngredientList}
-                layout="list"
-                showRanking={true}
-                rankingIndex={index}
-              />
-            );
-          })}
-        </div>
+        <RecommendedRecipeClient />
 
         {/* 더 많은 레시피 버튼 */}
         <div className="text-center">

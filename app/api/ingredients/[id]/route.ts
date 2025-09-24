@@ -17,10 +17,11 @@ function parseId(param: string) {
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseId(params.id);
+    const { id: idParam } = await params;
+    const id = parseId(idParam);
     const body = await req.json();
 
     // 필수 필드 체크
@@ -44,7 +45,7 @@ export async function PATCH(
       where: { id },
       data: {
         name: String(body.name).trim(),
-        category: catEnum , 
+        category: catEnum,
         quantity:
           typeof body.quantity === "number"
             ? body.quantity
@@ -83,16 +84,17 @@ export async function PATCH(
 /* DELETE /api/ingredients/:id */
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseId(params.id);
+    const { id: idParam } = await params;
+    const id = parseId(idParam);
     await prisma.ingredient.delete({ where: { id } });
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {
     console.error("[DELETE /api/ingredients/:id]", err);
     return NextResponse.json(
-      { error: err instanceof Error? err.message : "삭제 실패" },
+      { error: err instanceof Error ? err.message : "삭제 실패" },
       { status: 500 }
     );
   }
