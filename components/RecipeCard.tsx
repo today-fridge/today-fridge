@@ -1,11 +1,10 @@
-import { Clock, Star, XCircle, SquareUserRound } from "lucide-react";
+import { Clock, XCircle, SquareUserRound } from "lucide-react";
 import Link from "next/link";
 import { Recipe, IngredientForRecipe } from "@/types";
 import {
   calculateAvailabilityRatio,
   getAvailabilityBgColor,
   getAvailabilityColor,
-  getDifficultyText,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
 import { MAX_AVAILABILITY_RATIO } from "@/constants/recipe";

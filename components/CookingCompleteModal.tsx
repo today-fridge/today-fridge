@@ -116,7 +116,7 @@ export function CookingCompleteModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto bg-white rounded-xl">
-        <div className="relative p-6 text-center">
+        <div className="relative pt-6 text-center">
           <FloatingParticles />
 
           <motion.div
@@ -138,7 +138,7 @@ export function CookingCompleteModal({
                 className="p-4 rounded-lg bg-gray-50"
               >
                 <p className="text-lg text-gray-700">
-                  <strong>{dishName} 완성!</strong>
+                  <strong>{dishName}</strong>
                 </p>
               </motion.div>
             </div>
@@ -146,15 +146,11 @@ export function CookingCompleteModal({
         </div>
 
         <div className="p-6">
-          <DialogHeader className="mb-3">
+          <DialogHeader className="mb-3 flex justify-center items-center">
             <DialogTitle className="text-gray-700">
-              실제 사용한 재료량을 확인해주세요
+              사용한 재료량을 확인해주세요
             </DialogTitle>
-            <p className="text-s text-gray-500 pl-3 pr-3">
-              냉장고 관리의 편의를 위해 '개수 단위'로 차감됩니다
-              <br />
-              레시피 양과 관계없이 실제 사용한 개수를 선택해주세요 🌱
-            </p>
+            <p className="text-s text-gray-500 pl-3 pr-3">개수로 차감됩니다</p>
           </DialogHeader>
 
           <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">

@@ -19,11 +19,13 @@ import { RecipeIngredient } from "@/types";
 import RecipeDetailHeader from "./RecipeDetailHeader";
 import InventoryStatus from "./InventoryStatus";
 import RecipeTip from "./RecipeTip";
+import { useRouter } from "next/navigation";
 
 export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
   // TODO: 시간 나면 "좋아요" 기능 추가 예정
   // const [isFavorite, setIsFavorite] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const { data: recipe } = useRecipe(recipeId);
   const { data: userIngredientList } = useUserIngredcients();
@@ -52,8 +54,12 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
     userIngredientList,
   });
 
+  const handleBackClick = () => {
+    router.back();
+  };
+
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-[#F9FAFB] pb-20 md:pb-0">
       <div className="relative">
         <div className="w-full h-64 lg:h-80 xl:h-96 bg-gray-100 overflow-hidden">
           <img
@@ -93,7 +99,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent"></div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8 pb-10">
         {/* 레시피 헤더 정보 */}
         <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-[#E5E7EB] mb-8">
           <RecipeDetailHeader recipe={recipe} />
@@ -206,13 +212,13 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
 
               {/* 액션 버튼 */}
               <div className="space-y-4">
-                <Link
-                  href="/recipes/search"
+                <button
+                  onClick={handleBackClick}
                   className="w-full bg-white text-[#10B981] border-2 border-[#10B981] py-4 rounded-xl font-semibold hover:bg-[#10B981] hover:text-white transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-5 h-5" />
                   다른 레시피 보기
-                </Link>
+                </button>
                 <button
                   onClick={handleCookingComplete}
                   className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3"
