@@ -94,11 +94,11 @@ async function callOCRAPI(
 export async function POST(request: NextRequest) {
   try {
     return await processOCRRequest(request);
-  } catch (error: any) {
-    console.error("OCR API 오류:", error.message);
+  } catch (err) {
+    console.error("OCR API 오류:", err);
     return NextResponse.json(
       {
-        error: error.message || "OCR 처리 중 오류가 발생했습니다.",
+        error: err instanceof Error ? err.message : "OCR 처리 중 오류가 발생했습니다.",
         timestamp: new Date().toISOString(),
       },
       { status: 500 }

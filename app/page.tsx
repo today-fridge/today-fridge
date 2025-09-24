@@ -47,8 +47,8 @@ export default function HomePage() {
           setShowUpdateModal(false);
           setEditing(null);
         },
-        onError: (error: any) => {
-          alert(error.message || "수정 중 오류가 발생했습니다.");
+        onError: (err) => {
+          alert(err instanceof Error? err.message : "수정 중 오류가 발생했습니다.");
         },
       }
     );
@@ -61,8 +61,8 @@ export default function HomePage() {
         setShowUpdateModal(false);
         setEditing(null);
       },
-      onError: (error: any) => {
-        alert(error.message || "삭제 중 오류가 발생했습니다.");
+      onError: (err) => {
+        alert(err instanceof Error? err.message : "삭제 중 오류가 발생했습니다.");
       },
     });
   }, [deleteIngredientMutation]);
@@ -75,8 +75,8 @@ export default function HomePage() {
           setShowAddModal(false);
           setTimeout(() => addBtnRef.current?.focus(), 0);
         },
-        onError: (error: any) => {
-          alert(error.message || "추가 중 오류가 발생했습니다.");
+        onError: (err) => {
+          alert(err instanceof Error ? err.message : "추가 중 오류가 발생했습니다.");
         },
       });
     },

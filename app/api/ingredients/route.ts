@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const created = await prisma.ingredient.create({
       data: {
         name: body.name.trim(),
-        category: catEnum as any,
+        category: catEnum,
         quantity: Number(body.quantity),
         unit: body.unit.trim(),
         purchasedAt,

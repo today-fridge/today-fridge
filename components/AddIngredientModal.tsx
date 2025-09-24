@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Ingredient } from "@/types";
 import { CATEGORY_KO, emojiByKo, type CategoryKo } from "@/lib/ingredient";
 import ReceiptScanner from "@/components/ReceiptScanner";
-import type { ExtractedItem } from "@/services/receipt"; 
+import type { ExtractedItem } from "@/services/receipt";
 
 interface AddIngredientModalProps {
   isOpen: boolean;
@@ -31,9 +31,6 @@ export default function AddIngredientModal({
 }: AddIngredientModalProps) {
   const [submitting, setSubmitting] = useState(false);
 
-  // ❌ 이제 ReceiptScanner가 관리하므로 불필요
-  // const [scanningReceipt, setScanningReceipt] = useState(false);
-
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [showExtractedItems, setShowExtractedItems] = useState(false);
 
@@ -58,13 +55,13 @@ export default function AddIngredientModal({
     if (e.key === "Escape") onClose();
   };
 
-  // ✅ ReceiptScanner에서 올라온 추출 결과 반영
+  // ReceiptScanner에서 올라온 추출 결과 반영
   const handleExtract = (items: ExtractedItem[]) => {
     setExtractedItems(items);
     setShowExtractedItems(true);
   };
 
-  // ✅ 누락되어 있던 개별 추가 핸들러
+  //개별 추가 핸들러
   const handleAddExtractedItem = (item: ExtractedItem, index: number) => {
     if (submitting) return;
     setSubmitting(true);
@@ -78,7 +75,7 @@ export default function AddIngredientModal({
         expiryDate: item.expiryDate,
         // Ingredient 타입에 emoji가 없다면 any 캐스팅 유지
         emoji: emojiByKo[item.category],
-      } as any);
+      });
 
       setExtractedItems((prev) => prev.filter((_, i) => i !== index));
     } finally {
@@ -86,22 +83,26 @@ export default function AddIngredientModal({
     }
   };
 
-  // ✅ 누락되어 있던 모두 추가 핸들러
+  //전체 추가 핸들러
   const handleAddAllExtractedItems = async () => {
     if (submitting || extractedItems.length === 0) return;
     setSubmitting(true);
     try {
       for (let i = 0; i < extractedItems.length; i++) {
         const item = extractedItems[i];
-        onAdd({
+        const newIngredient: Omit<Ingredient, "id" | "daysLeft"> = {
           name: item.name,
           category: item.category,
           quantity: item.quantity,
           unit: item.unit,
-          purchaseDate: item.purchaseDate,
+          purchaseDate:
+            item.purchaseDate || new Date().toISOString().split("T")[0],
           expiryDate: item.expiryDate,
           emoji: emojiByKo[item.category],
-        } as any);
+          available: true,
+        };
+
+        onAdd(newIngredient);
 
         if (i < extractedItems.length - 1) {
           await new Promise((r) => setTimeout(r, 80));
@@ -115,22 +116,25 @@ export default function AddIngredientModal({
     }
   };
 
-  // 수동 추가
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || submitting) return;
 
     setSubmitting(true);
     try {
-      onAdd({
+      const newIngredient: Omit<Ingredient, "id" | "daysLeft"> = {
         name: formData.name.trim(),
         category: formData.category,
         quantity: Number(formData.quantity) || 1,
         unit: formData.unit,
-        purchaseDate: formData.purchaseDate || undefined,
+        purchaseDate:
+          formData.purchaseDate || new Date().toISOString().split("T")[0],
         expiryDate: formData.expiryDate || undefined,
         emoji: emojiByKo[formData.category],
-      } as any);
+        available: true, // 새로 추가되는 재료는 기본적으로 사용 가능
+      };
+
+      onAdd(newIngredient);
 
       setFormData({
         name: "",
@@ -374,7 +378,7 @@ export default function AddIngredientModal({
                 className="w-full p-4 border-2 border-[#E5E7EB] rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-[#F0FDF4]/20 transition-all duration-200"
               />
               <p className="text-xs text-[#6B7280] mt-2">
-                💡 유통기한 미입력 시 "미설정"
+                💡 유통기한 미입력 시 {"미설정"}
               </p>
             </div>
           </div>

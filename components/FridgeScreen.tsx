@@ -25,18 +25,22 @@ export default function FridgeScreen({
 
   const categories = ["전체", "야채", "고기", "유제품", "조미료", "기타"] as const;
 
-  const getExpiryStatus = (daysLeft: number) => {
+  const getExpiryStatus = (daysLeft: number | null | undefined) => {
+    if (daysLeft == null) return "safe"; // null 또는 undefined인 경우 기본값
     if (daysLeft <= 3) return "urgent";
     if (daysLeft <= 7) return "warning";
     return "safe";
   };
 
-  const formatExpiryDate = (daysLeft: number, expiryDate?: string) => {
+  const formatExpiryDate = (daysLeft: number | null | undefined, expiryDate?: string) => {
     if (expiryDate) {
       const date = new Date(expiryDate);
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       const shortDate = `${month}.${day}`;
+      
+      if (daysLeft == null) return `미설정 (${shortDate})`;
+      
       return daysLeft < 0
         ? "기한만료"
         : daysLeft === 0
@@ -48,8 +52,8 @@ export default function FridgeScreen({
   };
 
   //유통기한 미설정 시, 색상 변경
-  const getExpiryChipClass = (daysLeft: number, expiryDate?: string) => {
-    if (!expiryDate) {
+  const getExpiryChipClass = (daysLeft: number | null | undefined, expiryDate?: string) => {
+    if (!expiryDate || daysLeft == null) {
       return "bg-[#F3F4F6] text-[#6B7280]";
     }
     const status = getExpiryStatus(daysLeft);
@@ -75,6 +79,10 @@ export default function FridgeScreen({
     .sort((a, b) => {
       switch (sortBy) {
         case "expiry":
+          // null/undefined는 가장 뒤로 정렬
+          if (a.daysLeft == null && b.daysLeft == null) return 0;
+          if (a.daysLeft == null) return 1;
+          if (b.daysLeft == null) return -1;
           return a.daysLeft - b.daysLeft;
         case "name":
           return a.name.localeCompare(b.name);
