@@ -6,10 +6,12 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 const NavLoginButton = () => {
   const [user, setUser] = useState<User | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     // 초기 세션 확인
@@ -29,6 +31,7 @@ const NavLoginButton = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    router.push("/login");
   };
 
   if (user) {
