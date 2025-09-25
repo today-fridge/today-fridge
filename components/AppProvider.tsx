@@ -4,6 +4,7 @@ import Loader from "@/app/loading";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PropsWithChildren, Suspense, useState } from "react";
+import AuthProvider from "./AuthProvider";
 
 const AppProvider = ({ children }: PropsWithChildren) => {
   const [client] = useState(
@@ -18,7 +19,9 @@ const AppProvider = ({ children }: PropsWithChildren) => {
 
   return (
     <QueryClientProvider client={client}>
-      <Suspense fallback={<Loader />}>{children}</Suspense>
+      <AuthProvider>
+        <Suspense fallback={<Loader />}>{children}</Suspense>
+      </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

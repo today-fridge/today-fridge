@@ -4,10 +4,29 @@ import { prisma } from "@/lib/prisma";
 import { enumToKo, koToEnum, emojiByKo } from "@/lib/ingredient";
 import { ymd, calcDaysLeft } from "@/utils/date";
 import { PrismaIngredient } from "@/types";
+import { createClient } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
+
+    // 해당 사용자의 재료만 가져오기
     const rows = (await prisma.ingredient.findMany({
+      where: { userId: userId },
       orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
     })) as PrismaIngredient[];
     const today = new Date();
@@ -36,6 +55,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
+
     const body = (await req.json()) as {
       name: string;
       category: "야채" | "고기" | "유제품" | "조미료" | "기타";
@@ -61,6 +96,7 @@ export async function POST(req: Request) {
         unit: body.unit.trim(),
         purchasedAt,
         expiresAt,
+        userId: userId,
       },
     })) as PrismaIngredient;
 
