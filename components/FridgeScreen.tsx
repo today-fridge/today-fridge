@@ -110,7 +110,7 @@ export default function FridgeScreen({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151] mb-2">
-                내 냉장고 관리 🧊
+                냉장고 관리
               </h1>
               <p className="text-[#6B7280]">신선한 재료를 체계적으로 관리하세요</p>
             </div>

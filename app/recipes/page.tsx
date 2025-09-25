@@ -17,7 +17,7 @@ export default function RecipeRecommendation() {
         {/* 페이지 헤더 */}
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#374151] mb-4">
-            🔍 레시피 추천
+            레시피 추천
           </h1>
           <p className="text-[#6B7280] text-base sm:text-lg">
             현재 보유 재료로 바로 만들 수 있는 요리들이에요!
