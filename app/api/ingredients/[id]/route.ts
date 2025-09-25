@@ -8,6 +8,7 @@ import {
   type CategoryKo,
 } from "@/lib/ingredient";
 import { ymd, calcDaysLeft } from "@/utils/date";
+import { createClient } from "@/lib/supabase/server";
 
 function parseId(param: string) {
   const n = Number(param);
@@ -20,9 +21,35 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
     const { id: idParam } = await params;
     const id = parseId(idParam);
     const body = await req.json();
+
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+    });
+
+    if (!existingIngredient || existingIngredient.userId !== userId) {
+      return NextResponse.json(
+        { error: "재료를 찾을 수 없거나 접근 권한이 없습니다." },
+        { status: 404 }
+      );
+    }
 
     // 필수 필드 체크
     if (!body?.name || !body?.category || !body?.unit) {
@@ -87,9 +114,42 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
+
+    const userId = user.id;
     const { id: idParam } = await params;
     const id = parseId(idParam);
-    await prisma.ingredient.delete({ where: { id } });
+
+    const existingIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+    });
+
+    if (!existingIngredient || existingIngredient.userId !== userId) {
+      return NextResponse.json(
+        { error: "재료를 찾을 수 없거나 접근 권한이 없습니다." },
+        { status: 404 }
+      );
+    }
+
+    await prisma.ingredient.delete({
+      where: {
+        id: id,
+        userId: userId,
+      },
+    });
+
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {
     console.error("[DELETE /api/ingredients/:id]", err);
