@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/config/supabase";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 
 const NavLoginButton = () => {
   const [user, setUser] = useState<User | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     // 초기 세션 확인

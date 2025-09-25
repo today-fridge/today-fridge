@@ -1,19 +1,19 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
 import { ChefHat, Refrigerator } from "lucide-react";
 import Image from "next/image";
-import { supabase } from "@/config/supabase";
 
 const Login = () => {
+  const supabase = createClient();
   const handleOAuthLogin = async (provider: "kakao" | "google") => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/login/callback`,
         },
       });
-      if (error) console.error(`${provider} 로그인 에러:`, error);
     } catch (error) {
       console.error(`${provider} 로그인 실패:`, error);
     }

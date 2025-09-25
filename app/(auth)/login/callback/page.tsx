@@ -2,14 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/config/supabase";
 import { User } from "@supabase/supabase-js";
 import Loader from "@/app/loading";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = createClient();
     const handleAuthCallback = async () => {
       try {
         // URL에서 인증 정보 가져오기
