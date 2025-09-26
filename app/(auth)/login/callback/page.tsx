@@ -46,7 +46,6 @@ export default function AuthCallback() {
         headers: {
           "Content-Type": "application/json",
         },
-        // TODO: 사용자 재료 적용 필요
         body: JSON.stringify({
           id: user.id,
           name: user.user_metadata?.full_name || user.user_metadata?.name,

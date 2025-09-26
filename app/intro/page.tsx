@@ -155,9 +155,8 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            {/* TODO: 이미 로그인 된 사용자라면 냉장고 관리로 보여주게 하기 */}
             <Link
-              href="/login"
+              href="/"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <Refrigerator className="w-5 h-5 mr-2" />
@@ -299,7 +298,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/login"
+                href="/"
                 className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-green-600 bg-white hover:bg-gray-100 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 무료로 시작하기

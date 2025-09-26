@@ -59,11 +59,6 @@ export default function RecipeCard({
           >
             보유율 {availabilityRatio}%
           </div>
-          {MAX_AVAILABILITY_RATIO && (
-            <div className="absolute top-3 left-3 bg-[#10B981] text-white px-2 py-1 rounded-full text-xs font-medium">
-              ✨ 완벽
-            </div>
-          )}
         </div>
 
         {/* 레시피 정보 */}
