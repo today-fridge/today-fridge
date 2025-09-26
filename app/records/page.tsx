@@ -1,3 +1,5 @@
+"use client";
+
 import {
   TrendingUp,
   Clock,
@@ -8,111 +10,69 @@ import {
   Target,
   Sparkles,
 } from "lucide-react";
+import { useCookingRecords } from "@/hooks/useCookingRecordsQuery";
+import { Suspense } from "react";
+import Loader from "@/app/loading";
 
-export default function MyRecords() {
-  // 샘플 데이터
-  const monthlyStats = {
-    cookingCount: 12,
-    favoriteRecipe: "계란볶음밥",
-    mostUsedIngredient: "계란",
-    averageCookingTime: 18,
-  };
-
-  const recentCookings = [
-    {
-      id: "1",
-      name: "당근볶음",
-      date: "2025-08-29",
-      rating: 4,
-      imageUrl:
-        "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=300&h=200&fit=crop",
-      cookingTime: 15,
-      difficulty: 2,
-    },
-    {
-      id: "2",
-      name: "계란볶음밥",
-      date: "2025-08-28",
-      rating: 5,
-      imageUrl:
-        "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300&h=200&fit=crop",
-      cookingTime: 20,
-      difficulty: 3,
-    },
-    {
-      id: "3",
-      name: "우유빵",
-      date: "2025-08-27",
-      rating: 3,
-      imageUrl:
-        "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=300&h=200&fit=crop",
-      cookingTime: 45,
-      difficulty: 4,
-    },
-  ];
-
-  const favoriteRecipes = [
-    {
-      id: "1",
-      name: "계란볶음밥",
-      cookingCount: 5,
-      imageUrl:
-        "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300&h=200&fit=crop",
-      averageRating: 4.8,
-    },
-    {
-      id: "2",
-      name: "김치찌개",
-      cookingCount: 3,
-      imageUrl:
-        "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300&h=200&fit=crop",
-      averageRating: 4.3,
-    },
-    {
-      id: "3",
-      name: "당근볶음",
-      cookingCount: 2,
-      imageUrl:
-        "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=300&h=200&fit=crop",
-      averageRating: 4.0,
-    },
-  ];
-
-  const achievements = [
-    {
-      id: "1",
-      title: "요리 달인",
-      description: "이번 달 10회 이상 요리 성공",
-      icon: "🏆",
-      earned: true,
-      earnedDate: "2025-08-25",
-    },
-    {
-      id: "2",
-      title: "건강 요리사",
-      description: "야채 요리 5회 이상 완성",
-      icon: "🥬",
-      earned: true,
-      earnedDate: "2025-08-20",
-    },
-    {
-      id: "3",
-      title: "시간 관리 마스터",
-      description: "30분 이내 요리 3회 완성",
-      icon: "⏰",
-      earned: false,
-      earnedDate: null,
-    },
-  ];
+function RecordsContent() {
+  const { data } = useCookingRecords(10);
+  const { recentRecords, frequentIngredients, favoriteRecipes, monthlyStats } =
+    data;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}월 ${date.getDate()}일`;
   };
 
-  const renderStars = (rating: number) => {
-    return "★".repeat(rating) + "☆".repeat(5 - rating);
+  const getTopIngredient = () => {
+    return frequentIngredients.length > 0
+      ? frequentIngredients[0].name
+      : "없음";
   };
+
+  const getFavoriteRecipe = () => {
+    return favoriteRecipes.length > 0 ? favoriteRecipes[0].recipeName : "없음";
+  };
+
+  // 중복 레시피 제거한 최근 요리 기록
+  const uniqueRecentRecords = recentRecords.reduce((unique, record) => {
+    if (!unique.some((item) => item.recipeId === record.recipeId)) {
+      unique.push(record);
+    }
+    return unique;
+  }, [] as typeof recentRecords);
+
+  // TODO:성취도 뱃지
+  const achievements = [
+    {
+      id: "1",
+      title: "요리 달인",
+      description: "이번 달 10회 이상 요리 성공",
+      icon: "🏆",
+      earned: monthlyStats.cookingCount >= 10,
+      earnedDate:
+        monthlyStats.cookingCount >= 10 ? new Date().toISOString() : null,
+    },
+    {
+      id: "2",
+      title: "건강 요리사",
+      description: "야채 재료 5회 이상 사용",
+      icon: "🥬",
+      earned: frequentIngredients.some(
+        (ing) =>
+          ["양파", "당근", "대파", "마늘"].includes(ing.name) && ing.count >= 5
+      ),
+      earnedDate: null,
+    },
+    {
+      id: "3",
+      title: "시간 관리 마스터",
+      description: "30분 이내 요리 3회 완성",
+      icon: "⏰",
+      earned: false, // 실제 구현시 요리 시간 데이터 필요
+      earnedDate: null,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -125,7 +85,7 @@ export default function MyRecords() {
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151]">
-                내 요리 기록 📊
+                내 요리 기록
               </h1>
               <p className="text-[#6B7280]">
                 요리 여정을 한눈에 확인하고 성취를 기록하세요
@@ -140,7 +100,7 @@ export default function MyRecords() {
             <Calendar className="w-5 h-5 text-[#10B981]" />
             이번 달 통계
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-[#10B981]/10 rounded-xl">
@@ -165,7 +125,7 @@ export default function MyRecords() {
                     가장 많이 만든 요리
                   </div>
                   <div className="text-sm text-[#6B7280]">
-                    {monthlyStats.favoriteRecipe}
+                    {getFavoriteRecipe()}
                   </div>
                 </div>
               </div>
@@ -174,36 +134,22 @@ export default function MyRecords() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-[#F59E0B]/10 rounded-xl">
-                  <div className="text-2xl">🥚</div>
+                  <div className="text-2xl">🥕</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-[#374151]">
                     가장 많이 사용한 재료
                   </div>
                   <div className="text-sm text-[#6B7280]">
-                    {monthlyStats.mostUsedIngredient}
+                    {getTopIngredient()}
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-[#8B5CF6]/10 rounded-xl">
-                  <Clock className="w-6 h-6 text-[#8B5CF6]" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-[#374151]">
-                    평균 {monthlyStats.averageCookingTime}분
-                  </div>
-                  <div className="text-sm text-[#6B7280]">요리 시간</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 메인 콘텐츠 - 데스크톱: 2열, 모바일: 1열 */}
+        {/* 메인 콘텐츠 */}
         <div className="lg:grid lg:grid-cols-3 lg:gap-8 space-y-8 lg:space-y-0">
           {/* 왼쪽 컬럼 - 최근 요리 & 즐겨찾기 */}
           <div className="lg:col-span-2 space-y-8">
@@ -214,44 +160,54 @@ export default function MyRecords() {
                 최근 만든 요리
               </h3>
               <div className="space-y-4">
-                {recentCookings.map((cooking) => (
-                  <div
-                    key={cooking.id}
-                    className="flex gap-4 p-4 bg-[#F9FAFB] rounded-xl hover:bg-[#F3F4F6] transition-colors duration-200"
-                  >
-                    <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
-                      <img
-                        src={cooking.imageUrl}
-                        alt={cooking.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-[#374151]">
-                          {cooking.name}
-                        </h4>
-                        <span className="text-sm text-[#6B7280] bg-white px-2 py-1 rounded-md">
-                          {formatDate(cooking.date)}
-                        </span>
+                {uniqueRecentRecords.length > 0 ? (
+                  uniqueRecentRecords.map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex gap-4 p-4 bg-[#F9FAFB] rounded-xl hover:bg-[#F3F4F6] transition-colors duration-200"
+                    >
+                      <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+                        <img
+                          src={record.imageUrl || "/default-recipe.jpg"}
+                          alt={record.recipeName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "/default-recipe.jpg";
+                          }}
+                        />
                       </div>
-                      <div className="flex items-center gap-4 mb-2">
-                        <span className="text-[#F59E0B] text-sm">
-                          {renderStars(cooking.rating)}
-                        </span>
-                        <span className="text-xs text-[#6B7280]">
-                          ⏱️ {cooking.cookingTime}분
-                        </span>
-                        <span className="text-xs text-[#6B7280]">
-                          {"★".repeat(cooking.difficulty)} 난이도
-                        </span>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-[#374151]">
+                            {record.recipeName}
+                          </h4>
+                          <span className="text-sm text-[#6B7280] bg-white px-2 py-1 rounded-md">
+                            {formatDate(record.completedAt)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 mb-2">
+                          <span className="text-xs text-[#6B7280]">
+                            사용 재료:{" "}
+                            {record.usedIngredients
+                              .map((ing) => ing.name)
+                              .join(", ")}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-[#6B7280]">
+                    <div className="text-4xl mb-2">🍳</div>
+                    <p>아직 완성한 요리가 없어요!</p>
+                    <p className="text-sm">첫 번째 요리를 완성해보세요.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
+            {/* TODO: 실제 즐겨찾기 기능 추가 */}
             {/* 즐겨찾기 레시피 */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB]">
               <h3 className="text-lg font-bold text-[#374151] mb-6 flex items-center gap-2">
@@ -259,42 +215,68 @@ export default function MyRecords() {
                 즐겨찾기 레시피
               </h3>
               <div className="space-y-4">
-                {favoriteRecipes.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className="flex gap-4 p-4 bg-[#F9FAFB] rounded-xl hover:bg-[#F3F4F6] transition-colors duration-200"
-                  >
-                    <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
-                      <img
-                        src={recipe.imageUrl}
-                        alt={recipe.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-[#374151] mb-1">
-                          {recipe.name}
+                {favoriteRecipes.length > 0 ? (
+                  favoriteRecipes.slice(0, 5).map((recipe) => (
+                    <div
+                      key={recipe.recipeId}
+                      className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-[#374151] mb-1 truncate">
+                          {recipe.recipeName}
                         </h4>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-[#6B7280]">
-                            🍳 {recipe.cookingCount}번 요리
-                          </span>
-                          <span className="text-sm text-[#F59E0B]">
-                            ⭐ {recipe.averageRating}
-                          </span>
+                        <div className="text-sm text-[#6B7280]">
+                          🍳 {recipe.cookingCount}번 요리
                         </div>
                       </div>
-                      <Heart className="w-5 h-5 text-[#EF4444] fill-current" />
+                      <Heart className="w-5 h-5 text-[#EF4444] fill-current flex-shrink-0 ml-2" />
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-[#6B7280]">
+                    <p>즐겨찾는 레시피가 없어요</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
 
           {/* 오른쪽 컬럼 - 성취도 & 뱃지 */}
           <div className="lg:col-span-1 space-y-6">
+            {/* 자주 사용한 재료 */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB]">
+              <h3 className="text-lg font-bold text-[#374151] mb-6 flex items-center gap-2">
+                <div className="text-xl">🥕</div>
+                자주 사용한 재료
+              </h3>
+              <div className="space-y-3">
+                {frequentIngredients.length > 0 ? (
+                  frequentIngredients.slice(0, 5).map((ingredient, index) => (
+                    <div
+                      key={ingredient.name}
+                      className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[#10B981] text-white rounded-full flex items-center justify-center text-sm font-bold">
+                          {index + 1}
+                        </div>
+                        <span className="font-medium text-[#374151]">
+                          {ingredient.name}
+                        </span>
+                      </div>
+                      <span className="text-sm text-[#6B7280] bg-white px-3 py-1 rounded-full">
+                        {ingredient.count}회 사용
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-[#6B7280]">
+                    <p>재료 사용 기록이 없어요</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* 성취도 뱃지 */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E7EB]">
               <h3 className="text-lg font-bold text-[#374151] mb-6 flex items-center gap-2">
@@ -359,13 +341,27 @@ export default function MyRecords() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">새로운 요리 도전</span>
-                  <span className="text-sm font-bold">2/3</span>
+                  <span className="text-sm font-bold">
+                    {Math.min(uniqueRecentRecords.length, 3)}/3
+                  </span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2">
-                  <div className="bg-[#F59E0B] h-2 rounded-full w-2/3"></div>
+                  <div
+                    className="bg-[#F59E0B] h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.min(
+                        (uniqueRecentRecords.length / 3) * 100,
+                        100
+                      )}%`,
+                    }}
+                  ></div>
                 </div>
                 <p className="text-xs text-white/90">
-                  새로운 레시피 1개만 더 도전하면 목표 달성! 💪
+                  {uniqueRecentRecords.length >= 3
+                    ? "목표 달성! 🎉 새로운 도전을 계속해보세요!"
+                    : `새로운 레시피 ${
+                        3 - uniqueRecentRecords.length
+                      }개만 더 도전하면 목표 달성! 💪`}
                 </p>
               </div>
             </div>
@@ -385,5 +381,13 @@ export default function MyRecords() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MyRecords() {
+  return (
+    <Suspense fallback={<Loader />}>
+      <RecordsContent />
+    </Suspense>
   );
 }
