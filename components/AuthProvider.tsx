@@ -14,13 +14,13 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const supabase = createClient();
 
   // 인증이 필요 없는 페이지들
-  const publicPaths = ["/login", "/home", "/login/callback"];
+  const publicPaths = ["/intro", "/login", "/login/callback"];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       // 사용자가 있고, 로그인 페이지에 있다면 홈으로 리다이렉션
-      if (user && pathname === "/login") {
+      if (user && pathname === "/login" && isPublicPath) {
         router.push("/");
         return;
       }
@@ -32,7 +32,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
     });
-    // 상태가 변경되면 리다이렉션 플래그 리셋
   }, [pathname, router, isPublicPath]);
 
   return <>{children}</>;
