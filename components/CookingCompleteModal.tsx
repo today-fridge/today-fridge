@@ -46,10 +46,22 @@ export function CookingCompleteModal({
     [key: string]: number;
   }>({});
 
+  const getUserQuantityForIngredient = (ingredientName: string): number => {
+    const userIngredient = userIngredientList.find(
+      (userItem) => userItem.name.toLowerCase() === ingredientName.toLowerCase()
+    );
+    return userIngredient?.quantity ?? 0;
+  };
+
   useEffect(() => {
     const quantity: { [key: string]: number } = {};
     normalizedRecipeIngredients.forEach((ingredient) => {
-      quantity[ingredient.name] = ingredient.displayQuantity;
+      // 사용자가 보유한 해당 재료 찾기
+      const userQuantity = getUserQuantityForIngredient(ingredient.name);
+      // 개수화된 레시피 수량
+      const recipeQuantity = ingredient.displayQuantity;
+
+      quantity[ingredient.name] = Math.min(userQuantity, recipeQuantity);
     });
     setIngredientQuantity(quantity);
   }, [normalizedRecipeIngredients]);
@@ -194,6 +206,10 @@ export function CookingCompleteModal({
                     size="sm"
                     onClick={() => handleAdjustQuantity(ingredient.name, 0.5)}
                     className="w-8 h-8 p-0 rounded-full transition-all duration-300 hover:-translate-y-0.5"
+                    disabled={
+                      ingredientQuantity[ingredient.name] >=
+                      getUserQuantityForIngredient(ingredient.name)
+                    }
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
