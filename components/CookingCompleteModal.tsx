@@ -15,6 +15,7 @@ import {
   normalizeIngredientForDisplay,
   processIngredientUpdates,
 } from "@/lib/recipeTransform";
+import { useCreateCookingRecord } from "@/hooks/useCookingRecordsQuery";
 
 interface CookingCompleteModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ interface CookingCompleteModalProps {
   userIngredientList: IngredientForRecipe[];
   recipeIngredients: RecipeIngredient[];
   onIngredientsUpdate: (updatedIngredients: RecipeIngredient[]) => void;
+  recipeId: number;
+  recipeImageUrl?: string;
 }
 
 export function CookingCompleteModal({
@@ -32,7 +35,10 @@ export function CookingCompleteModal({
   userIngredientList,
   recipeIngredients,
   onIngredientsUpdate,
+  recipeId,
+  recipeImageUrl,
 }: CookingCompleteModalProps) {
+  const createCookingRecord = useCreateCookingRecord();
   const normalizedRecipeIngredients = useMemo(() => {
     return recipeIngredients.map(normalizeIngredientForDisplay);
   }, [recipeIngredients]);
@@ -71,6 +77,13 @@ export function CookingCompleteModal({
       userIngredientList,
       usedIngredients
     );
+    // 요리 기록 저장
+    createCookingRecord.mutate({
+      recipeId,
+      recipeName: dishName,
+      usedIngredients,
+      imageUrl: recipeImageUrl,
+    });
 
     onIngredientsUpdate(updatedFridgeIngredients);
     onClose();

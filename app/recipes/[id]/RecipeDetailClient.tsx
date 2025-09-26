@@ -242,6 +242,8 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
             recipeIngredients={recipe.ingredients}
             userIngredientList={userIngredientList}
             onIngredientsUpdate={handleIngredientConfirm}
+            recipeId={recipe.id} 
+            recipeImageUrl={recipe.imageUrl} 
           />
         )}
       </div>

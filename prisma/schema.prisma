@@ -70,4 +70,22 @@ model User {
   lastLogin DateTime @default(now())
 
   ingredients Ingredient[]
+   cookingRecords CookingRecord[]
+
+
 }
+model CookingRecord {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  recipeId        Int
+  recipeName      String
+  imageUrl        String?
+  usedIngredients String   // JSON string으로 저장
+  completedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("cooking_records")
+}
+
