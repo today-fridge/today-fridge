@@ -16,6 +16,7 @@ import {
   processIngredientUpdates,
 } from "@/lib/recipeTransform";
 import { useCreateCookingRecord } from "@/hooks/useCookingRecordsQuery";
+import { useUpdateMultipleIngredients } from "@/hooks/useRecipeQuery";
 
 interface CookingCompleteModalProps {
   isOpen: boolean;
@@ -23,7 +24,6 @@ interface CookingCompleteModalProps {
   dishName: string;
   userIngredientList: IngredientForRecipe[];
   recipeIngredients: RecipeIngredient[];
-  onIngredientsUpdate: (updatedIngredients: RecipeIngredient[]) => void;
   recipeId: number;
   recipeImageUrl?: string;
 }
@@ -34,26 +34,23 @@ export function CookingCompleteModal({
   dishName,
   userIngredientList,
   recipeIngredients,
-  onIngredientsUpdate,
   recipeId,
   recipeImageUrl,
 }: CookingCompleteModalProps) {
   const createCookingRecord = useCreateCookingRecord();
+  const updateMultipleIngredients = useUpdateMultipleIngredients();
   const normalizedRecipeIngredients = useMemo(() => {
     return recipeIngredients.map(normalizeIngredientForDisplay);
   }, [recipeIngredients]);
-  const [ingredientQuantity, setIngredientQuantity] = useState<{
-    [key: string]: number;
-  }>({});
-
   const getUserQuantityForIngredient = (ingredientName: string): number => {
     const userIngredient = userIngredientList.find(
       (userItem) => userItem.name.toLowerCase() === ingredientName.toLowerCase()
     );
     return userIngredient?.quantity ?? 0;
   };
-
-  useEffect(() => {
+  const [ingredientQuantity, setIngredientQuantity] = useState<{
+    [key: string]: number;
+  }>(() => {
     const quantity: { [key: string]: number } = {};
     normalizedRecipeIngredients.forEach((ingredient) => {
       // 사용자가 보유한 해당 재료 찾기
@@ -62,9 +59,10 @@ export function CookingCompleteModal({
       const recipeQuantity = ingredient.displayQuantity;
 
       quantity[ingredient.name] = Math.min(userQuantity, recipeQuantity);
-    });
-    setIngredientQuantity(quantity);
-  }, [normalizedRecipeIngredients]);
+    }),
+      [];
+    return quantity;
+  });
 
   const handleAdjustQuantity = (ingredientName: string, change: number) => {
     setIngredientQuantity((prev) => {
@@ -89,6 +87,7 @@ export function CookingCompleteModal({
       userIngredientList,
       usedIngredients
     );
+    updateMultipleIngredients.mutate(updatedFridgeIngredients);
     // 요리 기록 저장
     createCookingRecord.mutate({
       recipeId,
@@ -97,7 +96,6 @@ export function CookingCompleteModal({
       imageUrl: recipeImageUrl,
     });
 
-    onIngredientsUpdate(updatedFridgeIngredients);
     onClose();
   };
 

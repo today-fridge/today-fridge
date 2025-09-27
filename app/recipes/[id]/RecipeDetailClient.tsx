@@ -38,12 +38,6 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
     setIsModalOpen(false);
   };
 
-  const handleIngredientConfirm = (consumedIngredients: RecipeIngredient[]) => {
-    // TODO: 냉장고 재료 리팩토링 이후 재료 차감 코드 넣기
-    console.log("사용한 재료:", consumedIngredients);
-    setIsModalOpen(false);
-  };
-
   // 실제 보유율 계산
   const availabilityRatio = calculateAvailabilityRatio({
     recipe,
@@ -219,13 +213,15 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                   <ArrowLeft className="w-5 h-5" />
                   다른 레시피 보기
                 </button>
-                <button
-                  onClick={handleCookingComplete}
-                  className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3"
-                >
-                  🍳 요리 완성!
-                  <div className="text-xl">🎉</div>
-                </button>
+                {availabilityRatio > 50 && (
+                  <button
+                    onClick={handleCookingComplete}
+                    className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3"
+                  >
+                    🍳 요리 완성!
+                    <div className="text-xl">🎉</div>
+                  </button>
+                )}
               </div>
 
               {/* 요리 팁 */}
@@ -241,9 +237,8 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
             dishName={recipe.name}
             recipeIngredients={recipe.ingredients}
             userIngredientList={userIngredientList}
-            onIngredientsUpdate={handleIngredientConfirm}
-            recipeId={recipe.id} 
-            recipeImageUrl={recipe.imageUrl} 
+            recipeId={recipe.id}
+            recipeImageUrl={recipe.imageUrl}
           />
         )}
       </div>
