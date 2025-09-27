@@ -16,6 +16,7 @@ import {
   processIngredientUpdates,
 } from "@/lib/recipeTransform";
 import { useCreateCookingRecord } from "@/hooks/useCookingRecordsQuery";
+import { useUpdateMultipleIngredients } from "@/hooks/useRecipeQuery";
 
 interface CookingCompleteModalProps {
   isOpen: boolean;
@@ -23,7 +24,6 @@ interface CookingCompleteModalProps {
   dishName: string;
   userIngredientList: IngredientForRecipe[];
   recipeIngredients: RecipeIngredient[];
-  onIngredientsUpdate: (updatedIngredients: RecipeIngredient[]) => void;
   recipeId: number;
   recipeImageUrl?: string;
 }
@@ -34,25 +34,35 @@ export function CookingCompleteModal({
   dishName,
   userIngredientList,
   recipeIngredients,
-  onIngredientsUpdate,
   recipeId,
   recipeImageUrl,
 }: CookingCompleteModalProps) {
   const createCookingRecord = useCreateCookingRecord();
+  const updateMultipleIngredients = useUpdateMultipleIngredients();
   const normalizedRecipeIngredients = useMemo(() => {
     return recipeIngredients.map(normalizeIngredientForDisplay);
   }, [recipeIngredients]);
+  const getUserQuantityForIngredient = (ingredientName: string): number => {
+    const userIngredient = userIngredientList.find(
+      (userItem) => userItem.name.toLowerCase() === ingredientName.toLowerCase()
+    );
+    return userIngredient?.quantity ?? 0;
+  };
   const [ingredientQuantity, setIngredientQuantity] = useState<{
     [key: string]: number;
-  }>({});
-
-  useEffect(() => {
+  }>(() => {
     const quantity: { [key: string]: number } = {};
     normalizedRecipeIngredients.forEach((ingredient) => {
-      quantity[ingredient.name] = ingredient.displayQuantity;
-    });
-    setIngredientQuantity(quantity);
-  }, [normalizedRecipeIngredients]);
+      // 사용자가 보유한 해당 재료 찾기
+      const userQuantity = getUserQuantityForIngredient(ingredient.name);
+      // 개수화된 레시피 수량
+      const recipeQuantity = ingredient.displayQuantity;
+
+      quantity[ingredient.name] = Math.min(userQuantity, recipeQuantity);
+    }),
+      [];
+    return quantity;
+  });
 
   const handleAdjustQuantity = (ingredientName: string, change: number) => {
     setIngredientQuantity((prev) => {
@@ -77,6 +87,7 @@ export function CookingCompleteModal({
       userIngredientList,
       usedIngredients
     );
+    updateMultipleIngredients.mutate(updatedFridgeIngredients);
     // 요리 기록 저장
     createCookingRecord.mutate({
       recipeId,
@@ -85,7 +96,6 @@ export function CookingCompleteModal({
       imageUrl: recipeImageUrl,
     });
 
-    onIngredientsUpdate(updatedFridgeIngredients);
     onClose();
   };
 
@@ -194,6 +204,10 @@ export function CookingCompleteModal({
                     size="sm"
                     onClick={() => handleAdjustQuantity(ingredient.name, 0.5)}
                     className="w-8 h-8 p-0 rounded-full transition-all duration-300 hover:-translate-y-0.5"
+                    disabled={
+                      ingredientQuantity[ingredient.name] >=
+                      getUserQuantityForIngredient(ingredient.name)
+                    }
                   >
                     <Plus className="w-4 h-4" />
                   </Button>

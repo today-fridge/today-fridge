@@ -2,8 +2,13 @@ import {
   getAllRecipes,
   getOneRecipe,
   getUserIngredients,
+  updateMultipleIngredients,
 } from "@/services/recipes";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 
 export const useAllRecipes = () => {
   return useSuspenseQuery({
@@ -32,6 +37,21 @@ export const useUserIngredcients = () => {
         unit: ingredient.unit,
         available: ingredient.quantity > 0,
       }));
+    },
+  });
+};
+
+// 요리 완료 후 재료 차감
+export const useUpdateMultipleIngredients = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateMultipleIngredients,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userIngredcients"] });
+    },
+    onError: (error) => {
+      console.error("재료 일괄 수정 실패:", error);
     },
   });
 };

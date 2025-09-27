@@ -6,8 +6,6 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  console.log("request.cookies.getAll()", request.cookies.getAll());
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,7 +31,6 @@ export async function updateSession(request: NextRequest) {
 
   // 인증 토큰 새로고침
   const user = await supabase.auth.getUser();
-  console.log({ user });
 
   return supabaseResponse;
 }

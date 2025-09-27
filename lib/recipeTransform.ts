@@ -202,29 +202,26 @@ export const normalizeIngredientForDisplay = (ingredient: RecipeIngredient) => {
 
 // 재료 차감 로직
 export const processIngredientUpdates = (
-  originalFridgeIngredients: IngredientForRecipe[],
-  modalUpdatedIngredients: { name: string; quantity: number }[]
-) => {
+  userIngredientList: IngredientForRecipe[],
+  usedIngredients: { name: string; quantity: number }[]
+): Array<{ id: number; quantity: number }> => {
   const usedIngredientsMap = new Map(
-    modalUpdatedIngredients.map((item) => [
-      item.name.toLowerCase(),
-      item.quantity,
-    ])
+    usedIngredients.map((item) => [item.name.toLowerCase(), item.quantity])
   );
 
-  return originalFridgeIngredients.map((fridgeItem) => {
+  const updates: Array<{ id: number; quantity: number }> = [];
+
+  userIngredientList.forEach((fridgeItem) => {
     const usedQuantity = usedIngredientsMap.get(fridgeItem.name.toLowerCase());
 
-    if (usedQuantity !== undefined) {
+    if (usedQuantity !== undefined && usedQuantity > 0) {
       const newQuantity = Math.max(0, fridgeItem.quantity - usedQuantity);
-
-      return {
-        ...fridgeItem,
+      updates.push({
+        id: fridgeItem.id,
         quantity: newQuantity,
-        available: newQuantity > 0,
-      };
+      });
     }
-
-    return fridgeItem;
   });
+
+  return updates;
 };

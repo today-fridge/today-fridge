@@ -38,7 +38,7 @@ const InventoryStatus = ({
         ></div>
       </div>
       <p className="text-sm text-[#374151] mt-2">
-        {MAX_AVAILABILITY_RATIO
+        {availabilityRatio === MAX_AVAILABILITY_RATIO
           ? "🎉 모든 재료를 보유하고 있어요!"
           : `🛒 ${missingIngredients.length}개 재료가 더 필요해요`}
       </p>
