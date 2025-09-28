@@ -20,10 +20,15 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
     const body = await request.json();
-    
+
     const { recipeId, recipeName, usedIngredients, imageUrl } = body;
 
-    if (!recipeId || !recipeName || !usedIngredients || !Array.isArray(usedIngredients)) {
+    if (
+      !recipeId ||
+      !recipeName ||
+      !usedIngredients ||
+      !Array.isArray(usedIngredients)
+    ) {
       return NextResponse.json(
         { error: "필수 데이터가 누락되었습니다." },
         { status: 400 }
@@ -97,17 +102,20 @@ export async function GET(request: NextRequest) {
 
     // 재료 사용 빈도 계산
     const ingredientCount: Record<string, number> = {};
-    
+
     ingredientStats.forEach((record) => {
       try {
-        const ingredients = JSON.parse(record.usedIngredients as string) as Array<{
+        const ingredients = JSON.parse(
+          record.usedIngredients as string
+        ) as Array<{
           name: string;
           quantity: number;
         }>;
-        
+
         ingredients.forEach((ingredient) => {
           if (ingredient.name) {
-            ingredientCount[ingredient.name] = (ingredientCount[ingredient.name] || 0) + ingredient.quantity;
+            ingredientCount[ingredient.name] =
+              (ingredientCount[ingredient.name] || 0) + ingredient.quantity;
           }
         });
       } catch (error) {
@@ -119,7 +127,7 @@ export async function GET(request: NextRequest) {
     const frequentIngredients = Object.entries(ingredientCount)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
-      .map(([name, count]) => ({ name, count }));
+      .map(([name, count]) => ({ name, count: Math.round(count) }));
 
     // 레시피별 요리 횟수 통계
     const recipeStats = await prisma.cookingRecord.groupBy({
@@ -154,12 +162,12 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      recentRecords: recentRecords.map(record => ({
+      recentRecords: recentRecords.map((record) => ({
         ...record,
         usedIngredients: JSON.parse(record.usedIngredients as string),
       })),
       frequentIngredients,
-      favoriteRecipes: recipeStats.map(stat => ({
+      favoriteRecipes: recipeStats.map((stat) => ({
         recipeId: stat.recipeId,
         recipeName: stat.recipeName,
         cookingCount: stat._count.id,
