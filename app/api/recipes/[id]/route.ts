@@ -7,7 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const searchParams = request.nextUrl.searchParams;
     const { id } = await params;
+    const type = searchParams.get("type");
     const recipeId = parseInt(id);
 
     if (isNaN(recipeId)) {
@@ -17,11 +19,16 @@ export async function GET(
       );
     }
 
-    const prismaRecipe = await prisma.recipe.findUnique({
+    const options = {
       where: {
         id: recipeId,
       },
-    });
+    };
+
+    const prismaRecipe =
+      type === "ai"
+        ? await prisma.aiRecipe.findUnique(options)
+        : await prisma.recipe.findUnique(options);
 
     if (!prismaRecipe) {
       return NextResponse.json(
