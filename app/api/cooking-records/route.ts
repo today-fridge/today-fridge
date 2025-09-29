@@ -113,9 +113,9 @@ export async function GET(request: NextRequest) {
         }>;
 
         ingredients.forEach((ingredient) => {
-          if (ingredient.name) {
+          if (ingredient.name && ingredient.quantity > 0) {
             ingredientCount[ingredient.name] =
-              (ingredientCount[ingredient.name] || 0) + ingredient.quantity;
+              (ingredientCount[ingredient.name] || 0) + 1;
           }
         });
       } catch (error) {
