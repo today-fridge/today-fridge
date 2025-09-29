@@ -85,7 +85,7 @@ function RecordsContent() {
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151]">
-                내 요리 기록
+                나의 요리 기록
               </h1>
               <p className="text-[#6B7280]">
                 요리 여정을 한눈에 확인하고 성취를 기록하세요

@@ -38,7 +38,7 @@ export default function WebHeader() {
   const privateNav = [
     { href: "/", label: "냉장고 관리" },
     { href: "/recipes", label: "레시피" },
-    { href: "/records", label: "내 기록" },
+    { href: "/records", label: "기록" },
   ];
 
   // 로그인 상태에 따라 네비게이션 결정
