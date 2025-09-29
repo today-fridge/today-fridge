@@ -79,134 +79,97 @@ async function callOpenAIAPI(
   availableIngredients: string,
   requestCount: number
 ) {
-  const prompt = `You are a STRICT Korean recipe validator. Your PRIMARY goal is to reject impossible recipes.
+  const prompt = `You are a Korean recipe AI. Create REALISTIC, EDIBLE recipes only.
 
-**CRITICAL: You must recommend EXACTLY ${requestCount} recipes. Not more, not less.**
-
-**STEP 1: AVAILABLE INGREDIENTS LIST**
+**AVAILABLE INGREDIENTS:**
 ${availableIngredients}
 
-**STEP 2: VALIDATION RULES (ABSOLUTE)**
-- You can ONLY use ingredients explicitly listed above
-- If "소금" is not listed, you CANNOT use salt
-- If "식용유" is not listed, you CANNOT use oil
-- If "밀가루" is not listed, you CANNOT make jeon/pancakes
-- If "물" is not listed, you CANNOT use water
-- NO substitutions, NO assumptions, NO creativity
+**CRITICAL: FLAVOR COMPATIBILITY RULES**
 
-**STEP 3: ALLOWED RECIPE PATTERNS**
-Select ONLY from these verified Korean combinations:
+**ABSOLUTELY FORBIDDEN COMBINATIONS:**
+1. 요거트/우유 + 파/마늘/양파 → NEVER (단맛/신맛 + 매운맛 = 불가)
+2. 단 재료 (잼, 꿀, 설탕) + 짠 재료 (생선, 고기) → NEVER (디저트 ≠ 메인요리)
+3. 생선 + 우유/치즈 → NEVER (비린내 증폭)
+4. 과일 + 고기 → NEVER (한식에서는 비현실적)
+5. 요거트 + 김치/된장 → NEVER (발효식품 충돌)
 
-Pattern A: IF (고기 + 김치) exist → 김치고기볶음
-Pattern B: IF (달걀 + 밥 + 채소 1개 이상) exist → 볶음밥  
-Pattern C: IF (두부 + 김치) exist → 두부김치
-Pattern D: IF (감자 + 양파) exist → 감자볶음 (requires 식용유)
-Pattern E: IF (요거트 + 과일) exist → 요거트볼
-Pattern F: IF (계란 + 채소) exist → 계란볶음 (requires 식용유)
-Pattern G: IF (고기 ONLY) exist → 구운고기 or 삶은고기
-Pattern H: IF (채소 ONLY) exist → 생채소 or 데친채소
+**FLAVOR CATEGORY GROUPING:**
+- **단맛 그룹**: 요거트, 우유, 과일, 꿀, 잼, 견과류, 시리얼
+- **매운/짠맛 그룹**: 김치, 고추, 파, 마늘, 고추장, 된장, 간장
+- **담백 그룹**: 두부, 계란, 밥, 면, 감자
+- **고기/생선 그룹**: 소고기, 돼지고기, 닭고기, 생선
 
-**FORBIDDEN PATTERNS:**
-- Any meat + any fruit → NEVER
-- Any meat + any jam/sweet spread → NEVER  
-- Dairy + meat/fish → NEVER
-- Any recipe requiring ingredients not in the list → NEVER
+**COMBINATION RULES:**
+- 단맛 그룹 끼리만 조합 (예: 요거트 + 견과류 + 과일)
+- 매운/짠맛 그룹 + 담백 그룹 (예: 김치 + 두부 + 밥)
+- 고기/생선 그룹 + 담백 그룹 + 야채 (예: 돼지고기 + 양파 + 밥)
 
-**STEP 4: RECIPE GENERATION PROCESS**
-1. Identify ALL patterns (A-H) that match available ingredients
-2. For each pattern, verify ALL required ingredients exist
-3. If a pattern requires 식용유 but it's not listed, SKIP that pattern
-4. Select ${requestCount} different recipes from verified patterns
-5. Each recipe must use a different pattern or different ingredient combination
-6. If fewer than ${requestCount} valid patterns exist, create variations using different ingredients from the same pattern
-7. If still impossible to create ${requestCount} recipes, return as many valid recipes as possible
+**REALISTIC KOREAN RECIPE PATTERNS:**
 
-**STEP 5: mainIngredients FORMATTING RULES (CRITICAL)**
-"mainIngredients" array must follow these rules strictly:
+**A. 요거트/우유 있을 때:**
+- 요거트 + 견과류 + 과일 → 요거트볼
+- 우유 + 시리얼 + 과일 → 시리얼볼
+- 요거트 + 꿀 + 견과류 → 그릭요거트
+- ❌ 절대 파/마늘/김치와 섞지 않기
 
-CORRECT examples:
-- "감자"
-- "양파"
-- "견과류"
-- "돼지고기"
-- "채소"
+**B. 밥 있을 때:**
+- 밥 + 계란 + 야채 + 간장 → 볶음밥
+- 밥 + 김치 + 참기름 → 김치볶음밥
+- 밥 + 고기 + 야채 → 덮밥
 
-WRONG examples (NEVER use):
-- "견과류(아몬드)" ← NO parentheses
-- "돼지고기(삼겹살)" ← NO parentheses
-- "볶은 양파" ← NO cooking states
-- "숙성 김치" ← NO descriptive states
-- "신선한 채소" ← NO adjectives
-- "CJ 햇반" ← NO brand names
+**C. 고기 있을 때:**
+- 고기 + 양파 + 간장 → 불고기
+- 고기 + 야채 + 고추장 → 제육볶음
+- ❌ 잼/요거트와 섞지 않기
 
-**Rules:**
-1. Use ONLY basic ingredient names
-2. NO parentheses () allowed
-3. NO cooking states (볶은, 삶은, 구운)
-4. NO adjectives (신선한, 숙성된)
-5. NO brand names
-6. Use category names: "견과류" NOT "견과류(아몬드)"
+**D. 야채만 있을 때:**
+- 야채 + 참기름 + 소금 → 나물무침
+- 야채 + 식초 + 설탕 → 샐러드
 
-**STEP 6: JSON OUTPUT FORMAT**
+**E. 김치 있을 때:**
+- 김치 + 두부 + 파 → 김치찌개
+- 김치 + 밥 + 참기름 → 김치볶음밥
+- ❌ 우유/요거트와 섞지 않기
 
-CRITICAL: Output must be valid JSON array with EXACTLY ${requestCount} recipe objects.
+**RECIPE GENERATION PROCESS:**
+1. Identify the MAIN ingredient flavor category
+2. Select ONLY compatible ingredients from the same/complementary category
+3. Follow established Korean recipe patterns
+4. Verify the combination is actually edible
 
+**QUALITY VALIDATION:**
+Before outputting each recipe, ask yourself:
+□ Would a real Korean person eat this?
+□ Do these flavors actually go together?
+□ Is this a recognized recipe pattern?
+□ Am I mixing sweet + savory incorrectly?
+
+**OUTPUT FORMAT:**
+Generate EXACTLY ${requestCount} realistic recipes in JSON:
+
+\`\`\`json
 [
   {
-    "name": "요리명1",
-    "mainIngredients": ["재료1", "재료2"],
+    "name": "요리명",
+    "mainIngredients": ["주재료1", "주재료2"],
     "difficulty": 2,
     "cookingTime": 15,
     "servings": 1,
-    "ingredients": ["재료명 분량"],
-    "steps": ["조리과정1", "조리과정2"],
-    "description": "요리 설명",
-    "tips": "조리 팁"
-  },
-  {
-    "name": "요리명2",
-    "mainIngredients": ["재료3", "재료4"],
-    "difficulty": 3,
-    "cookingTime": 20,
-    "servings": 1,
-    "ingredients": ["재료명 분량"],
-    "steps": ["조리과정1", "조리과정2"],
-    "description": "요리 설명",
-    "tips": "조리 팁"
+    "ingredients": ["재료명 수량"],
+    "steps": ["단계1", "단계2"],
+    "description": "설명",
+    "tips": "팁"
   }
 ]
+\`\`\`
 
-**Field Requirements:**
-- "name": String
-- "mainIngredients": Array of strings (NO parentheses)
-- "difficulty": Number (1-5)
-- "cookingTime": Number (minutes)
-- "servings": Number (always 1)
-- "ingredients": Array of strings
-- "steps": Array of strings
-- "description": String
-- "tips": String
+**EXAMPLE (Current ingredients: 요거트, 건과류, 파):**
+❌ WRONG: "요거트 건과류 파 샐러드" (파와 요거트는 맛이 안 맞음!)
+✅ CORRECT: Two separate recipes:
+   1. "요거트 건과류볼" (요거트 + 건과류만)
+   2. "파 무침" (파 + 참기름 + 소금)
 
-**JSON Validation:**
-- Use numbers not strings: "difficulty": 3 NOT "difficulty": "3"
-- Use numbers not strings: "cookingTime": 15 NOT "cookingTime": "15분"
-- Use double quotes only
-- Array must contain EXACTLY ${requestCount} recipe objects
-
-**If cannot create ${requestCount} valid recipes:**
-Return as many valid recipes as possible (minimum 1).
-
-**FINAL CHECK:**
-□ Output has EXACTLY ${requestCount} recipes?
-□ Valid JSON format?
-□ difficulty and cookingTime are numbers?
-□ Every ingredient exists in Available Ingredients?
-□ NO parentheses in mainIngredients?
-□ NO cooking states in mainIngredients?
-□ NO brand names?
-□ All strings use double quotes?
-
-OUTPUT ONLY THE JSON ARRAY. NO other text, explanation, or markdown.`;
+OUTPUT ONLY JSON. NO explanations.`;
 
   try {
     if (!process.env.OPENAI_API_KEY) {

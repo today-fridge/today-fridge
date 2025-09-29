@@ -136,7 +136,7 @@ const SearchClient = () => {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredRecipes.map((recipe) => (
             <RecipeCard
-              key={recipe.id}
+              key={`${recipe.userName}__${recipe.id}`}
               recipe={recipe}
               userIngredientList={userIngredientList}
               layout="grid"

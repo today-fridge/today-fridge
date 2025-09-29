@@ -29,7 +29,6 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
   const type = searchParams.get("type") ?? "none";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
-  console.log({ type });
 
   const { data: recipe } = useRecipe(recipeId, type);
   const { data: userIngredientList } = useUserIngredcients();
@@ -263,6 +262,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                   <ArrowLeft className="w-5 h-5" />
                   {isAIRecipe ? "다른 AI 레시피 보기" : "다른 레시피 보기"}
                 </button>
+                {availabilityRatio > 50 && (
                 <button
                   onClick={handleCookingComplete}
                   className={`w-full py-5 rounded-2xl font-bold text-lg hover:shadow-2xl active:scale-95 transition-all duration-200 shadow-lg flex items-center justify-center gap-3 text-white ${
@@ -274,6 +274,7 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
                   🍳 {isAIRecipe ? "AI 레시피" : "요리"} 완성!
                   <div className="text-xl">🎉</div>
                 </button>
+                )}
               </div>
 
               {/* 요리 팁 */}

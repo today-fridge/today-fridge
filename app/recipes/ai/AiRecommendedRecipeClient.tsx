@@ -1,36 +1,29 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { useUserIngredcients } from "@/hooks/useRecipeQuery";
 import RecipeCard from "@/components/RecipeCard";
 import { Recipe } from "@/types";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import {
+  calculateAvailabilityRatio,
+  getMissingIngredients,
+  sortRecipesByAvailability,
+} from "@/lib/recipeTransform";
 
 const AiRecommendedRecipeClient = () => {
-  const [aiRecipes, setAiRecipes] = useState<Recipe[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false);
-
   const { data: userIngredientList } = useUserIngredcients();
+  const ref = useRef(null);
 
-  // 실제 보유 가능한 재료만 필터링
-  const availableIngredients = useMemo(() => {
-    return userIngredientList.filter(
-      (ingredient) => ingredient.available && ingredient.quantity > 0
-    );
-  }, [userIngredientList]);
-
-  // AI 레시피 생성 함수
-  const generateAIRecipes = async () => {
-    if (availableIngredients.length === 0) {
-      alert("냉장고에 재료를 먼저 추가해주세요!");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
+  const {
+    data: aiRecipes,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["generateAIRecipes"],
+    queryFn: async () => {
       const ingredientNames = availableIngredients
         .map((ing) => ing.name)
         .join(", ");
@@ -47,84 +40,86 @@ const AiRecommendedRecipeClient = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("AI 레시피 생성 실패");
+      if (response.status === 404) {
+        return { items: [] };
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("재료를 불러오지 못했습니다.");
+      }
 
-      // API에서 이미 완전한 Recipe 객체를 받아오므로 그대로 사용
-      setAiRecipes(data.recipes);
-      setHasGenerated(true);
+      return await response.json();
+    },
+    select: (data) => {
+      return data.recipes as Recipe[];
+    },
+    staleTime: 1000 * 60 * 60 * 24,
+    gcTime: 1000 * 60 * 60 * 24,
+  });
 
-      // 성공 메시지
-      alert(`🎉 ${data.recipes.length}개의 AI 레시피가 생성되었어요!`);
-    } catch (error) {
-      console.error("AI 레시피 생성 오류:", error);
-      alert("AI 레시피 생성에 실패했어요. 다시 시도해주세요.");
-    } finally {
-      setIsLoading(false);
+  // 실제 보유 가능한 재료만 필터링
+  const availableIngredients = useMemo(() => {
+    return userIngredientList.filter(
+      (ingredient) => ingredient.available && ingredient.quantity > 0
+    );
+  }, [userIngredientList]);
+
+  // AI 레시피 생성 함수
+  const generateAIRecipes = async () => {
+    if (availableIngredients.length === 0) {
+      alert("냉장고에 재료를 먼저 추가해주세요!");
+      return;
     }
+
+    refetch();
   };
+
+  // 보유율 높은 순으로 정렬하여 상위 3개만
+  const recommendedRecipes = sortRecipesByAvailability(
+    aiRecipes ?? [],
+    userIngredientList
+  ).map((recipe) => ({
+    ...recipe,
+    availability: calculateAvailabilityRatio({ recipe, userIngredientList }),
+    missingIngredients: getMissingIngredients({ recipe, userIngredientList }),
+  }));
 
   return (
     <div className="space-y-6 mb-12">
       {/* AI 추천 헤더 */}
       <div className="text-center mb-8">
-        {!hasGenerated && (
-          <button
-            onClick={generateAIRecipes}
-            disabled={isLoading || availableIngredients.length === 0}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                AI가 레시피를 생각하고 있어요...
-              </>
-            ) : availableIngredients.length === 0 ? (
-              <>
-                <Sparkles className="w-5 h-5" />
-                재료를 먼저 추가해주세요
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                AI 레시피 추천받기
-              </>
-            )}
-          </button>
-        )}
+        <button
+          onClick={generateAIRecipes}
+          disabled={isFetching || availableIngredients.length === 0}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isFetching ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              {aiRecipes
+                ? "새로운 레시피 생성 중..."
+                : "AI가 레시피를 생각하고 있어요..."}
+            </>
+          ) : availableIngredients.length === 0 ? (
+            <>
+              <Sparkles className="w-5 h-5" />
+              재료를 먼저 추가해주세요
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              {aiRecipes ? "다른 레시피 추천받기" : "AI 레시피 추천받기"}
+            </>
+          )}
+        </button>
       </div>
 
       {/* AI 추천 레시피 목록 */}
-      {hasGenerated && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={generateAIRecipes}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 disabled:opacity-50 text-sm"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    새로운 레시피 생성 중...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    다른 레시피 추천받기
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {aiRecipes.length > 0 ? (
-            aiRecipes.map((recipe, index) => (
-              <div key={recipe.id} className="relative">
+      {recommendedRecipes && (
+        <div className="space-y-6" ref={ref}>
+          {recommendedRecipes.length > 0 ? (
+            recommendedRecipes.map((recipe, index) => (
+              <div key={`${recipe.name}__${recipe.id}`} className="relative">
                 <RecipeCard
                   recipe={recipe}
                   userIngredientList={availableIngredients}
@@ -167,7 +162,7 @@ const AiRecommendedRecipeClient = () => {
       )}
 
       {/* AI 레시피 저장 안내 */}
-      {hasGenerated && aiRecipes.length > 0 && (
+      {aiRecipes && aiRecipes.length > 0 && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 text-center">
           <h4 className="font-semibold text-blue-700 mb-1">
             생성된 AI 레시피는 저장됩니다!
