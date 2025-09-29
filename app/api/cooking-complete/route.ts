@@ -47,29 +47,62 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // 트랜잭션으로 여러 재료를 한 번에 업데이트
-    const updated = await prisma.$transaction(
-      ingredients.map((ingredient) =>
-        prisma.ingredient.update({
-          where: { id: ingredient.id },
-          data: {
-            quantity: ingredient.quantity,
+    //재료를 수량에 따라 분류
+    const ingredientsToUpdate: { id: number; quantity: number }[] = [];
+    const ingredientsToDelete: number[] = [];
+
+    ingredients.forEach((ingredient) => {
+      if (ingredient.quantity > 0) {
+        ingredientsToUpdate.push(ingredient);
+      } else {
+        ingredientsToDelete.push(ingredient.id);
+      }
+    });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const operations = [];
+
+      // 수량 업데이트
+      if (ingredientsToUpdate.length > 0) {
+        const updatePromises = ingredientsToUpdate.map((ingredient) =>
+          tx.ingredient.update({
+            where: { id: ingredient.id },
+            data: { quantity: ingredient.quantity },
+          })
+        );
+        operations.push(...updatePromises);
+      }
+
+      // 재료 삭제
+      if (ingredientsToDelete.length > 0) {
+        const deletePromise = tx.ingredient.deleteMany({
+          where: {
+            id: { in: ingredientsToDelete },
+            userId: userId,
           },
-        })
-      )
-    );
+        });
+        operations.push(deletePromise);
+      }
+
+      return Promise.all(operations);
+    });
 
     return NextResponse.json(
       {
-        message: "재료 수량이 성공적으로 업데이트되었습니다.",
-        data: updated,
+        message: "재료 수량이 성공적으로 업데이트 되었습니다.",
+        updated: ingredientsToUpdate.length,
+        deleted: ingredientsToDelete.length,
+        details: {
+          updatedIngredients: ingredientsToUpdate.map((i) => i.id),
+          deletedIngredients: ingredientsToDelete,
+        },
       },
       { status: 200 }
     );
   } catch (err) {
-    console.error("[PATCH /api/ingredients/multiple]", err);
+    console.error("[PATCH /api/cooking-complete]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "수정 실패" },
+      { error: err instanceof Error ? err.message : "처리 실패" },
       { status: 500 }
     );
   }

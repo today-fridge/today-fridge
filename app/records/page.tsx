@@ -6,8 +6,6 @@ import {
   Heart,
   Award,
   Calendar,
-  BarChart3,
-  Target,
   Sparkles,
 } from "lucide-react";
 import { useCookingRecords } from "@/hooks/useCookingRecordsQuery";
@@ -80,12 +78,9 @@ function RecordsContent() {
         {/* 페이지 헤더 */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-[#10B981]/10 rounded-xl">
-              <BarChart3 className="w-6 h-6 text-[#10B981]" />
-            </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151]">
-                내 요리 기록
+                나의 요리 기록
               </h1>
               <p className="text-[#6B7280]">
                 요리 여정을 한눈에 확인하고 성취를 기록하세요
