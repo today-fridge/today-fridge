@@ -1,13 +1,14 @@
 // services/receipt.ts
 import type { CategoryKo } from "@/lib/ingredient";
+import { classifyIngredientCategory } from "@/lib/ingredientCategoryClassifier";
 
 export interface ExtractedItem {
   name: string;
-  category: CategoryKo;       // 예: "기타"
-  quantity: number;           // 예: 1
-  unit: string;               // 예: "개"
-  purchaseDate: string;       // yyyy-mm-dd
-  expiryDate?: string;        // yyyy-mm-dd | undefined
+  category: CategoryKo; // 예: "기타"
+  quantity: number; // 예: 1
+  unit: string; // 예: "개"
+  purchaseDate: string; // yyyy-mm-dd
+  expiryDate?: string; // yyyy-mm-dd | undefined
 }
 
 /** 파일을 base64(dataURL의 payload만)로 변환 */
@@ -37,14 +38,22 @@ export const toExtractedItems = (
 ): ExtractedItem[] => {
   if (!rawItems) return [];
   return rawItems
-    .map((item) => ({
-      name: String(item?.name?.text ?? "").trim(),
-      category: "기타" as CategoryKo,
-      quantity: Number(item?.count?.text ?? 1),
-      unit: "개",
-      purchaseDate: todayISO,
-      expiryDate: undefined,
-    }))
+    .map((item) => {
+      const name = String(item?.name?.text ?? "").trim();
+      const quantity = Number(item?.count?.text ?? 1);
+
+      // 재료 이름으로 자동 카테고리 분류
+      const category = classifyIngredientCategory(name);
+
+      return {
+        name,
+        category, // 자동으로 분류된 카테고리
+        quantity,
+        unit: "개",
+        purchaseDate: todayISO,
+        expiryDate: undefined,
+      };
+    })
     .filter((i) => i.name.length > 0 && Number.isFinite(i.quantity));
 };
 
@@ -73,7 +82,6 @@ export const scanReceipt = async (file: File): Promise<ExtractedItem[]> => {
     ],
   };
 
-  // BASE_URL 있으면 사용, 없으면 상대경로
   const base = process.env.NEXT_PUBLIC_BASE_URL?.trim() || "";
   const url = `${base}/api/ocr`;
 

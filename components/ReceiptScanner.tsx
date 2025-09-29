@@ -39,14 +39,14 @@ export default function ReceiptScanner({ onExtract, className }: Props) {
   return (
     <div className={className}>
       {/* 테스트 데이터 버튼 */}
-      <button
+      {/* <button
         onClick={handleTest}
         className="text-sm underline text-[#6B7280] disabled:opacity-50"
         disabled={scanning}
         type="button"
       >
         테스트 데이터로 채우기
-      </button>
+      </button> */}
 
       {/* 업로드 버튼 */}
       <div className="mt-4">

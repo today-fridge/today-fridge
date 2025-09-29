@@ -20,7 +20,6 @@ export default function AllRecipesClient() {
               <ArrowLeft className="w-6 h-6 text-[#6B7280]" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🍽️</div>
               <h1 className="text-2xl lg:text-3xl font-bold text-[#374151]">
                 전체 레시피 모음
               </h1>
@@ -30,6 +29,7 @@ export default function AllRecipesClient() {
             보유 재료 순으로 정렬된 모든 레시피를 확인해보세요.
           </p>
         </div>
+        
         <SearchClient />
       </div>
     </div>

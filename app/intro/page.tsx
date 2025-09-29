@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { AnchorHTMLAttributes, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useInView } from "motion/react";
 import Link from "next/link";
 import {
@@ -17,6 +17,8 @@ import {
   Sparkles,
   ChevronDown,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const { scrollYProgress } = useScroll();
@@ -32,6 +34,19 @@ export default function HomePage() {
   const howItWorksInView = useInView(howItWorksRef, { once: true });
 
   const [openFAQ, setOpenFAQ] = useState<number | null>(null);
+
+  const router = useRouter();
+  const supabase = createClient();
+  const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const { data } = await supabase.auth.getUser();
+
+    if (data.user) {
+      router.push("/");
+    } else {
+      router.push("/login");
+    }
+  };
 
   const toggleFAQ = (index: number) => {
     setOpenFAQ(openFAQ === index ? null : index);
@@ -155,9 +170,9 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            {/* TODO: 이미 로그인 된 사용자라면 냉장고 관리로 보여주게 하기 */}
             <Link
-              href="/login"
+              href="/"
+              onClick={handleClick}
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <Refrigerator className="w-5 h-5 mr-2" />
@@ -276,7 +291,7 @@ export default function HomePage() {
       </motion.section>
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-green-600 via-green-500 to-yellow-500 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-r from-green-600 via-green-400 to-green-600 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
@@ -299,7 +314,8 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/login"
+                href={"/"}
+                onClick={handleClick}
                 className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-green-600 bg-white hover:bg-gray-100 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 무료로 시작하기

@@ -2,14 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/config/supabase";
 import { User } from "@supabase/supabase-js";
 import Loader from "@/app/loading";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AuthCallback() {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = createClient();
     const handleAuthCallback = async () => {
       try {
         // URL에서 인증 정보 가져오기
@@ -45,7 +46,6 @@ export default function AuthCallback() {
         headers: {
           "Content-Type": "application/json",
         },
-        // TODO: 사용자 재료 적용 필요
         body: JSON.stringify({
           id: user.id,
           name: user.user_metadata?.full_name || user.user_metadata?.name,

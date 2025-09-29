@@ -1,25 +1,25 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
 import { ChefHat, Refrigerator } from "lucide-react";
 import Image from "next/image";
-import { supabase } from "@/config/supabase";
 
 const Login = () => {
+  const supabase = createClient();
   const handleOAuthLogin = async (provider: "kakao" | "google") => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/login/callback`,
         },
       });
-      if (error) console.error(`${provider} 로그인 에러:`, error);
     } catch (error) {
       console.error(`${provider} 로그인 실패:`, error);
     }
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen pb-20 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-10 left-10 w-32 h-32 bg-green-200/30 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-emerald-300/20 rounded-full blur-2xl"></div>
       <div className="absolute top-1/2 left-20 w-20 h-20 bg-teal-200/40 rounded-full blur-lg"></div>
@@ -27,9 +27,14 @@ const Login = () => {
       <div className="bg-white/80 backdrop-blur-lg rounded-3xl px-10 pt-10 pb-6 max-w-lg w-full shadow-2xl border border-white/20 relative">
         {/* 메인 로고 섹션 */}
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300 mb-6">
-            {/* PR #13(favicon 관련) 머지 후 아이콘 교체 예정 */}
-            <Refrigerator className="w-12 h-12 text-white" />
+          <div className="w-20 h-20 bg-gradient-to-br from-emerald-50 via-green-100 to-teal-200 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-300 mb-6">
+            <Image
+              src="/favicon.png"
+              alt="오늘의 냉장고 로고"
+              width={50}
+              height={50}
+              className=""
+            />
           </div>
 
           <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent mb-3">
@@ -72,7 +77,7 @@ const Login = () => {
               <div>
                 <h3 className="font-semibold text-gray-800">AI 맞춤 레시피</h3>
                 <p className="text-sm text-gray-600">
-                  내 냉장고 재료로 완벽한 요리
+                  냉장고 재료로 완벽한 요리
                 </p>
               </div>
             </div>

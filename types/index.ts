@@ -77,3 +77,13 @@ export interface PrismaIngredient {
   expiresAt: Date | null;
   updatedAt: Date;
 }
+
+export interface AiRecipe {
+  name: string;
+  description?: string;
+  difficulty: number;
+  cookingTime: number;
+  servings: number;
+  ingredients: string[];
+  steps: string[];
+}

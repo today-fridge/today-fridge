@@ -33,6 +33,10 @@ export default function AddIngredientModal({
 
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
   const [showExtractedItems, setShowExtractedItems] = useState(false);
+  // 선택된 아이템들의 인덱스를 관리하는 상태
+  const [selectedItemIndices, setSelectedItemIndices] = useState(
+    new Set<number>()
+  );
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -50,41 +54,56 @@ export default function AddIngredientModal({
     onCloseRef.current = onClose;
   });
 
+  // 모달이 닫힐 때 상태 초기화
+  const handleClose = () => {
+    // 영수증 관련 상태 초기화
+    setExtractedItems([]);
+    setShowExtractedItems(false);
+    setSelectedItemIndices(new Set());
+
+    // 수동 입력 폼 초기화
+    setFormData({
+      name: "",
+      category: "기타",
+      quantity: 1,
+      unit: "개",
+      purchaseDate: new Date().toISOString().split("T")[0],
+      expiryDate: "",
+    });
+
+    // 제출 상태 초기화
+    setSubmitting(false);
+
+    onClose();
+  };
+
   // ESC 키
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
+    if (e.key === "Escape") handleClose();
   };
 
   // ReceiptScanner에서 올라온 추출 결과 반영
   const handleExtract = (items: ExtractedItem[]) => {
     setExtractedItems(items);
     setShowExtractedItems(true);
+    setSelectedItemIndices(new Set());
   };
 
-  //개별 추가 핸들러
-  const handleAddExtractedItem = (item: ExtractedItem, index: number) => {
-    if (submitting) return;
-    setSubmitting(true);
-    try {
-      onAdd({
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity,
-        unit: item.unit,
-        purchaseDate: item.purchaseDate,
-        expiryDate: item.expiryDate,
-        // Ingredient 타입에 emoji가 없다면 any 캐스팅 유지
-        emoji: emojiByKo[item.category],
-      });
-
-      setExtractedItems((prev) => prev.filter((_, i) => i !== index));
-    } finally {
-      setSubmitting(false);
-    }
+  // 개별 아이템 선택/해제 토글
+  const handleToggleItem = (index: number) => {
+    setSelectedItemIndices((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   //전체 추가 핸들러
-  const handleAddAllExtractedItems = async () => {
+  const handleAddAllItems = async () => {
     if (submitting || extractedItems.length === 0) return;
     setSubmitting(true);
     try {
@@ -108,8 +127,50 @@ export default function AddIngredientModal({
           await new Promise((r) => setTimeout(r, 80));
         }
       }
+
       setExtractedItems([]);
       setShowExtractedItems(false);
+      setSelectedItemIndices(new Set());
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 선택된 아이템들만 추가하는 함수
+  const handleAddSelectedItems = async () => {
+    if (submitting || selectedItemIndices.size === 0) return;
+    setSubmitting(true);
+
+    try {
+      const selectedItems = Array.from(selectedItemIndices)
+        .map((index) => extractedItems[index])
+        .filter(Boolean);
+
+      for (let i = 0; i < selectedItems.length; i++) {
+        const item = selectedItems[i];
+        const newIngredient: Omit<Ingredient, "id" | "daysLeft"> = {
+          name: item.name,
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          purchaseDate:
+            item.purchaseDate || new Date().toISOString().split("T")[0],
+          expiryDate: item.expiryDate,
+          emoji: emojiByKo[item.category],
+          available: true,
+        };
+
+        onAdd(newIngredient);
+
+        if (i < selectedItems.length - 1) {
+          await new Promise((r) => setTimeout(r, 80));
+        }
+      }
+
+      setExtractedItems([]);
+      setShowExtractedItems(false);
+      setSelectedItemIndices(new Set());
       onClose();
     } finally {
       setSubmitting(false);
@@ -144,7 +205,6 @@ export default function AddIngredientModal({
         purchaseDate: new Date().toISOString().split("T")[0],
         expiryDate: "",
       });
-      onClose();
     } finally {
       setSubmitting(false);
     }
@@ -162,7 +222,7 @@ export default function AddIngredientModal({
       aria-modal="true"
       aria-labelledby="add-ingredient-title"
       onKeyDown={handleKeyDown}
-      tabIndex={-1} // ✅ 포커스 받도록
+      tabIndex={-1}
     >
       <div className="bg-white rounded-2xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* 헤더 */}
@@ -185,7 +245,7 @@ export default function AddIngredientModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="닫기"
             className="p-2 hover:bg-[#F3F4F6] rounded-xl transition-colors"
           >
@@ -206,52 +266,126 @@ export default function AddIngredientModal({
                 <ReceiptText className="w-5 h-5" />
                 영수증에서 찾은 상품들 ({extractedItems.length}개)
               </h3>
-              <button
-                onClick={handleAddAllExtractedItems}
-                disabled={submitting}
-                className="px-4 py-2 bg-[#10B981] text-white rounded-lg text-sm font-medium hover:bg-[#059669] transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    추가 중...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    모두 추가
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {extractedItems.map((item, index) => (
-                <div
-                  key={`${item.name}-${index}`}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-gray-100"
+
+              {/* 선택 여부에 따라 다른 버튼 표시 */}
+              {selectedItemIndices.size === 0 ? (
+                // 아무것도 선택되지 않았을 때 - 전체 추가 버튼
+                <button
+                  onClick={handleAddAllItems}
+                  disabled={submitting}
+                  className="px-4 py-2 bg-[#10B981] text-white rounded-lg text-sm font-medium hover:bg-[#059669] transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{emojiByKo[item.category]}</span>
-                    <div>
-                      <div className="font-medium text-[#374151]">
-                        {item.name}
-                      </div>
-                      <div className="text-sm text-[#6B7280]">
-                        {item.quantity}
-                        {item.unit} • {item.category}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      추가 중...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      전체 추가
+                    </>
+                  )}
+                </button>
+              ) : (
+                // 하나 이상 선택되었을 때 - 선택된 개수 추가 버튼
+                <button
+                  onClick={handleAddSelectedItems}
+                  disabled={submitting}
+                  className="px-4 py-2 bg-[#10B981] text-white rounded-lg text-sm font-medium hover:bg-[#059669] transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      추가 중...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      {selectedItemIndices.size}개 추가
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {extractedItems.map((item, index) => {
+                const isSelected = selectedItemIndices.has(index);
+
+                return (
+                  <div
+                    key={`${item.name}-${index}`}
+                    className={`flex items-center justify-between p-3 rounded-lg shadow-sm border cursor-pointer transition-all duration-200 ${
+                      isSelected
+                        ? "bg-[#10B981]/10 border-[#10B981] border-2 shadow-md"
+                        : "bg-white border border-gray-100 hover:border-[#10B981]/30"
+                    }`}
+                    onClick={() => handleToggleItem(index)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">
+                        {emojiByKo[item.category]}
+                      </span>
+                      <div>
+                        <div
+                          className={`font-medium transition-colors ${
+                            isSelected ? "text-[#047857]" : "text-[#374151]"
+                          }`}
+                        >
+                          {item.name}
+                        </div>
+                        <div className="text-sm text-[#6B7280]">
+                          {item.quantity}
+                          {item.unit} • {item.category}
+                        </div>
                       </div>
                     </div>
+
+                    {/* 우측 토글 버튼 */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // 부모 클릭 이벤트 방지
+                        handleToggleItem(index);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isSelected
+                          ? "bg-[#10B981] text-white hover:bg-[#059669]"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                      }`}
+                    >
+                      {isSelected ? "선택됨" : "추가"}
+                    </button>
                   </div>
+                );
+              })}
+            </div>
+
+            {/* 전체 선택/해제 버튼 - 토글 모드일 때만 표시 */}
+            {selectedItemIndices.size > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-200">
+                <div className="flex gap-2">
                   <button
-                    onClick={() => handleAddExtractedItem(item, index)}
-                    className="px-3 py-1 bg-[#10B981] text-white rounded-lg text-sm hover:bg-[#059669] transition-colors disabled:opacity-50"
+                    onClick={() =>
+                      setSelectedItemIndices(
+                        new Set(extractedItems.map((_, index) => index))
+                      )
+                    }
+                    className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     disabled={submitting}
                   >
-                    추가
+                    전체 선택
+                  </button>
+                  <button
+                    onClick={() => setSelectedItemIndices(new Set())}
+                    className="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    disabled={submitting}
+                  >
+                    전체 해제
                   </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -415,7 +549,7 @@ export default function AddIngredientModal({
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 py-4 px-6 border-2 border-[#E5E7EB] text-[#6B7280] rounded-xl font-semibold hover:bg-[#F3F4F6] transition-all duration-200"
             >
               취소
