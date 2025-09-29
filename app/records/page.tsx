@@ -76,7 +76,7 @@ function RecordsContent() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
-      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 lg:px-6 py-6 lg:py-8 pb-20">
         {/* 페이지 헤더 */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
