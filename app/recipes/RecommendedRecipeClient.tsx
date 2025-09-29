@@ -30,7 +30,7 @@ const RecommendedRecipeClient = () => {
       {recommendedRecipes.map((recipe, index) => {
         return (
           <RecipeCard
-            key={recipe.id}
+            key={`${recipe.id}__${recipe.userName}`}
             recipe={recipe}
             userIngredientList={userIngredientList}
             layout="list"

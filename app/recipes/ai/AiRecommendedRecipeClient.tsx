@@ -124,7 +124,7 @@ const AiRecommendedRecipeClient = () => {
 
           {aiRecipes.length > 0 ? (
             aiRecipes.map((recipe, index) => (
-              <div key={recipe.id} className="relative">
+              <div key={`${recipe.name}__${recipe.id}`} className="relative">
                 <RecipeCard
                   recipe={recipe}
                   userIngredientList={availableIngredients}
