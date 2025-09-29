@@ -1,23 +1,30 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import RecipeCard from "@/components/RecipeCard";
 import {
   calculateAvailabilityRatio,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
-import { useAllRecipes, useUserIngredcients } from "@/hooks/useRecipeQuery";
+import {
+  useAllAiRecipes,
+  useAllRecipes,
+  useUserIngredcients,
+} from "@/hooks/useRecipeQuery";
+import Link from "next/link";
 
 const SearchClient = () => {
   const [activeFilter, setActiveFilter] = useState("전체");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: recipes } = useAllRecipes();
+  const { data: aiRecipes } = useAllAiRecipes();
+
   const { data: userIngredientList } = useUserIngredcients();
 
   const filters = ["전체", "쉬움", "보통", "어려움"];
   const processedRecipes = useMemo(() => {
-    return recipes.map((recipe) => ({
+    return recipes.concat(aiRecipes).map((recipe) => ({
       ...recipe,
       availabilityRatio: calculateAvailabilityRatio({
         recipe,
@@ -62,7 +69,7 @@ const SearchClient = () => {
   return (
     <>
       {/* 검색 및 필터 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB] mb-6">
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB] mb-4">
         {/* 검색바 */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
@@ -109,6 +116,20 @@ const SearchClient = () => {
             재료 보유율 순 정렬
           </div>
         </div>
+      </div>
+      <div className="space-y-6 my-3 sticky top-19 z-10 bg-white">
+        <Link
+          href="/recipes/ai"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center md:justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="hidden md:block">
+            혹시 여기에서도 원하시는 레시피가 없으신가요?
+          </span>
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-5 h-5" />
+            <span>AI 레시피 추천받기</span>
+          </div>
+        </Link>
       </div>
       {/* 레시피 그리드 */}
       {filteredRecipes.length > 0 ? (

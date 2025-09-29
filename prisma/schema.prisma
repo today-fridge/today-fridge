@@ -9,7 +9,7 @@ datasource db {
 
 model Recipe {
   id                    Int      @id @default(autoincrement())
-  RCP_SNO               Int      @unique // 레시피 일련번호
+  RCP_SNO               Int?      @unique // 레시피 일련번호
   RCP_TTL               String   // 레시피 제목
   CKG_NM                String   // 요리명
   RGTR_ID               String   // 등록자 ID
@@ -89,3 +89,30 @@ model CookingRecord {
   @@map("cooking_records")
 }
 
+model AiRecipe {
+  id                    Int      @id @default(autoincrement())
+  RCP_SNO               Int?      @unique // 레시피 일련번호
+  RCP_TTL               String   
+  CKG_NM                String   
+  RGTR_ID               String   // 여기에서는 AI검색을 이용한 사용자 ID
+  RGTR_NM               String   
+  CKG_MTH_ACTO_NM       String   
+  CKG_STA_ACTO_NM       String   
+  CKG_MTRL_ACTO_NM      String   
+  CKG_KND_ACTO_NM       String   
+  CKG_IPDC              String?  
+  CKG_MTRL_CN           String?  
+  CKG_INBUN_NM          String   
+  CKG_DODF_NM           String   
+  CKG_TIME_NM           String   
+  FIRST_REG_DT          BigInt   
+  IMAGE_URL             String?  
+  WEB_INGREDIENTS       String   
+  WEB_RECIPE_STEPS      String   
+  WEB_STEP_COUNT        Int      
+  WEB_INGREDIENT_COUNT  Int      
+  DATA_COLLECTED        String   
+  createdAt             DateTime @default(now())
+  
+  @@map("ai_recipes")
+}

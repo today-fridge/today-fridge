@@ -7,7 +7,6 @@ import {
   getAvailabilityColor,
   getMissingIngredients,
 } from "@/lib/recipeTransform";
-import { MAX_AVAILABILITY_RATIO } from "@/constants/recipe";
 import DifficultyStars from "./DifficultyStars";
 
 interface RecipeCardProps {
@@ -38,7 +37,9 @@ export default function RecipeCard({
   if (layout === "grid") {
     return (
       <Link
-        href={`/recipes/${recipe.id}`}
+        href={`/recipes/${recipe.id}${
+          recipe.userName === "AI 셰프" ? "?type=ai" : ""
+        }`}
         className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] cursor-pointer hover:shadow-lg hover:border-[#10B981]/20 active:scale-[0.98] transition-all duration-200"
       >
         {/* 재료 보유율 배지 */}
@@ -141,7 +142,9 @@ export default function RecipeCard({
   // List layout
   return (
     <Link
-      href={`/recipes/${recipe.id}`}
+      href={`/recipes/${recipe.id}${
+        recipe.userName === "AI 셰프" ? "?type=ai" : ""
+      }`}
       className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-[#E5E7EB] cursor-pointer hover:shadow-lg hover:border-[#10B981]/30 active:scale-[0.98] transition-all duration-200 relative overflow-hidden block"
     >
       {/* 순위 배지 */}

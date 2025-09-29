@@ -1,34 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { transformPrismaRecipe } from "@/lib/recipeTransform";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const searchParams = request.nextUrl.searchParams;
     const { id } = await params;
-    const type = searchParams.get("type");
-    const recipeId = parseInt(id);
+    const aiRecipeId = parseInt(id);
 
-    if (isNaN(recipeId)) {
+    if (isNaN(aiRecipeId)) {
       return NextResponse.json(
         { error: "올바르지 않은 레시피 ID입니다." },
         { status: 400 }
       );
     }
 
-    const options = {
+    const prismaRecipe = await prisma.aiRecipe.findUnique({
       where: {
-        id: recipeId,
+        id: aiRecipeId,
       },
-    };
-
-    const prismaRecipe =
-      type === "ai"
-        ? await prisma.aiRecipe.findUnique(options)
-        : await prisma.recipe.findUnique(options);
+    });
 
     if (!prismaRecipe) {
       return NextResponse.json(
@@ -40,7 +33,7 @@ export async function GET(
     const recipe = transformPrismaRecipe(prismaRecipe);
     return NextResponse.json(recipe);
   } catch (error) {
-    console.error("[GET/api/recipes/id] 서버 오류:", error);
+    console.error("[GET/api/recipes/ai-recipes/id] 서버 오류:", error);
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
       { status: 500 }
