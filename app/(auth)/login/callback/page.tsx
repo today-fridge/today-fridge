@@ -23,7 +23,6 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          console.log("로그인 성공:", data.session.user);
           await saveUserToPrisma(data.session.user);
           router.push("/");
         } else {

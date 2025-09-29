@@ -43,8 +43,6 @@ export const useCreateCookingRecord = () => {
     onSuccess: (newRecord) => {
       // 모든 요리 기록 관련 캐시 무효화
       queryClient.invalidateQueries({ queryKey: COOKING_RECORDS_QUERY_KEY });
-
-      console.log("요리 기록이 성공적으로 저장되었습니다:", newRecord);
     },
     onError: (error) => {
       console.error("요리 기록 생성 실패:", error);

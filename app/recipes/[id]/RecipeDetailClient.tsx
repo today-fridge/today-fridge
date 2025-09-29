@@ -29,7 +29,6 @@ export default function RecipeDetailClient({ recipeId }: { recipeId: string }) {
   const type = searchParams.get("type") ?? "none";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
-  console.log({ type });
 
   const { data: recipe } = useRecipe(recipeId, type);
   const { data: userIngredientList } = useUserIngredcients();

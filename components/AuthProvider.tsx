@@ -27,7 +27,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
       // 사용자가 없고, 보호된 페이지에 있다면 로그인 페이지로 리다이렉션
       if (!user && !isPublicPath) {
-        console.log("미로그인 사용자 로그인 페이지로 리다이렉션");
         router.push("/login");
         return;
       }
